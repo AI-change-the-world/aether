@@ -2,8 +2,8 @@ from typing import Generic, Optional
 
 from pydantic import BaseModel, Field, field_validator
 
-from aether.models.generic import T
-from aether.models.input import Input
+from aether.api.generic import T
+from aether.api.input import Input
 
 __TASKS__ = [
     # for model train and predict

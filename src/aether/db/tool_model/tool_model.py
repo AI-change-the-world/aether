@@ -16,9 +16,11 @@ class AetherToolModel(Base):
     )
     is_deleted = Column(SmallInteger, default=0, comment="逻辑删除标记")
     tool_model_name = Column(String, comment="tool model name")
-    # json config
+    # json config, such as {"base_url": "http://xxx", "api_key": "sk-1234567890","model_name": "gpt-3.5-turbo"}
     tool_model_config = Column(String, comment="tool model config")
-    # tool model request json, corresponding to models.request.AetherRequest.extra
-    req = Column(String, comment="请求参数")
-    # tool model response json, corresponding to models.response.AetherResponse.output
-    resp = Column(String, comment="响应参数")
+    # tool model request definition, corresponding to api.request.AetherRequest.extra
+    # if req == "", then extra is plain text
+    req = Column(String, nullable=False, comment="请求参数定义")
+    # tool model response definition, corresponding to api.response.AetherResponse.output
+    # if resp == "", then output is plain text
+    resp = Column(String, nullable=False, comment="响应参数定义")

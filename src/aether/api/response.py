@@ -2,7 +2,7 @@ from typing import Generic, Optional
 
 from pydantic import BaseModel, Field
 
-from aether.models.generic import T
+from aether.api.generic import T
 
 
 class ResponseMeta(BaseModel):
