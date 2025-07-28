@@ -1,10 +1,19 @@
-import time
 from typing import Generic, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from aether.models.generic import T
 from aether.models.input import Input
+
+__TASKS__ = [
+    # for model train and predict
+    "train",
+    "predict",
+    # for llm
+    "chat",
+    # for data augment
+    "augment",
+]
 
 
 class RequestMeta(BaseModel):
@@ -14,13 +23,9 @@ class RequestMeta(BaseModel):
     用于定义请求的元数据信息，继承自BaseModel
 
     Attributes:
-        task_id (Optional[int]): 任务ID，可选参数，默认为当前时间
         sync (bool): 是否同步执行，必填参数
     """
 
-    task_id: Optional[int] = Field(
-        default_factory=lambda: int(time.time()), alias="task_id"
-    )
     sync: bool
 
 
@@ -41,3 +46,9 @@ class AetherRequest(BaseModel, Generic[T]):
     input: Input
     meta: RequestMeta
     extra: Optional[T] = None
+
+    @field_validator("task", pre=True)
+    def task_validate(cls, v):
+        v = v.lower()
+        assert v in __TASKS__, f"Invalid task: {v}"
+        return v

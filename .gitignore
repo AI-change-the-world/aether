@@ -190,3 +190,5 @@ logs/
 .DS_Store
 
 .vscode
+
+*.db

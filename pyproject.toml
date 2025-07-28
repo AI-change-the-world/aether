@@ -1,6 +1,6 @@
 [project]
 name = "aether"
-version = "0.1.0"
+version = "0.0.1"
 description = "a layer between models,data,... and human request"
 authors = [
     {name = "壹零",email = "guchengxi1994@qq.com"}
@@ -15,11 +15,15 @@ dependencies = [
     "torch (>=2.7.1,<3.0.0)",
     "ultralytics[yolo] (==8.3.169)",
     "supervision[yolo] (==0.25.1)",
+    "sqlalchemy (>=2.0.41,<3.0.0)",
 ]
 
 [tool.poetry]
 packages = [{include = "aether", from = "src"}]
 
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.4.1"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
