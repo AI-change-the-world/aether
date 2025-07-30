@@ -1,10 +1,15 @@
 import gc
+import json
 
 import torch
 
-from aether.api.request import AetherRequest
+from aether.api.request import AetherRequest, RegisterModelRequest
 from aether.call.model import ModelConfig
 from aether.common.logger import logger
+from aether.db import get_session
+from aether.db.task.task_crud import AetherTaskCRUD
+from aether.db.tool_model.tool_model_crud import AetherToolModelCRUD
+from aether.utils.object_match import is_object_match
 
 
 class __BasicClient:
@@ -39,7 +44,7 @@ class __BasicClient:
     def re_activate(self):
         pass
 
-    def call(self, input: AetherRequest, **kwargs): ...
+    def call(self, req: AetherRequest, **kwargs): ...
 
 
 class Client(__BasicClient):
@@ -54,8 +59,58 @@ class Client(__BasicClient):
     def __init__(self, config: ModelConfig, auto_dispose: bool = False):
         self.config = config
         self.auto_dispose = auto_dispose
+        self.session = get_session()
 
-    def call(self, input, **kwargs):
+    # TODO: implement async call
+    def __call_register_model(self, req: AetherRequest[RegisterModelRequest], **kwargs):
+        __task_name__ = "register_model"
+        assert req.task == "register_model", "task must be register_model"
+        if req.model_id != 0:
+            logger.warning(f"[{__task_name__}] model_id is not 0, will be ignored")
+        logger.info(f"[{__task_name__}] create register model task ...")
+        task_json = {
+            "task_type": "register_model",
+            "status": 0,
+        }
+        aether_task = AetherTaskCRUD.create(self.session, task_json)
+        if aether_task is None:
+            logger.error(f"[{__task_name__}] create task failed")
+            raise ValueError("create task failed")
+        if not is_object_match(req.extra, RegisterModelRequest):
+            logger.error(f"[{__task_name__}] extra is not RegisterModelRequest")
+            task_json["status"] = 4
+            aether_task = AetherTaskCRUD.update(
+                self.session, aether_task.aether_task_id, task_json
+            )
+            raise ValueError("extra is not RegisterModelRequest")
+        logger.info(f"[{__task_name__}] create tool model ...")
+        aether_tool_json = {
+            "tool_model_name": req.extra.model_name,
+            "tool_model_config": json.dumps(req.extra.model_config),
+            "req": json.dumps(req.extra.request_definition),
+            "resp": json.dumps(req.extra.response_definition),
+        }
+        aether_tool_model = AetherToolModelCRUD.create(self.session, aether_tool_json)
+        if aether_tool_model is None:
+            logger.error(f"[{__task_name__}] create tool model failed")
+            task_json["status"] = 4
+            aether_task = AetherTaskCRUD.update(
+                self.session, aether_task.aether_task_id, task_json
+            )
+            raise ValueError("create tool model failed")
+        logger.info(f"[{__task_name__}] update task status to 1 ...")
+        task_json["status"] = 1
+        AetherTaskCRUD.update(self.session, aether_task.aether_task_id, task_json)
+
+    def __call_openai_model(self, req: AetherRequest, **kwargs):
+        __task_name__ = "call_openai_model"
+        assert req.task == "chat", "task must be chat"
+        if req.model_id == 0:
+            logger.error(f"[{__task_name__}] model_id is 0")
+            raise ValueError("model_id is 0")
+        pass
+
+    def call(self, req, **kwargs):
         return super().call(input, **kwargs)
 
     def re_activate(self):
