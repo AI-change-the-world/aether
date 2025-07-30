@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -8,12 +8,15 @@ from aether.db.tool_model.tool_model import AetherToolModel
 
 class AetherToolModelCRUD:
     @staticmethod
-    def create(db: Session, model_data: dict) -> AetherToolModel:
-        model = AetherToolModel(**model_data)
-        db.add(model)
+    def create(
+        db: Session, model_data: Union[dict, AetherToolModel]
+    ) -> AetherToolModel:
+        if isinstance(model_data, dict):
+            model_data = AetherToolModel(**model_data)
+        db.add(model_data)
         db.commit()
-        db.refresh(model)
-        return model
+        db.refresh(model_data)
+        return model_data
 
     @staticmethod
     def get_by_id(db: Session, model_id: int) -> Optional[AetherToolModel]:

@@ -11,7 +11,7 @@ from sqlalchemy import (
     func,
 )
 
-from aether.db import Base
+from aether.db.basic import Base
 
 
 class AetherToolModel(Base):

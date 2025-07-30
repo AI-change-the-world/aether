@@ -1,7 +1,8 @@
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine.url import make_url
 
-from aether.db import Base, engine, get_engine, sql_url
+from aether.common.logger import logger
+from aether.db.basic import Base, engine, get_engine, sql_url
 
 
 def create_database_if_not_exists(db_url: str):
@@ -19,13 +20,16 @@ def create_database_if_not_exists(db_url: str):
 
 
 def init_db(url: str = None):
-    from aether import db
+    from aether.db import basic
+    from aether.db.task.task import AetherTask
+    from aether.db.tool_model.tool_model import AetherToolModel
 
     if url:
-        db.sql_url = url
-        db.engine = None  # 重新初始化
+        basic.sql_url = url
+        basic.engine = None  # 重新初始化
 
     # 触发创建
     engine = get_engine()
+    logger.info(f"init db, url: {engine.url}")
     create_database_if_not_exists(str(engine.url))
     Base.metadata.create_all(bind=engine)

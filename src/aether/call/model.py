@@ -27,7 +27,7 @@ class ModelConfig(BaseModel):
     save_path: Optional[str] = None
     model_type: ModelType
 
-    @model_validator
+    @model_validator(mode="before")
     def check_url_or_path(cls, values):
         """
         验证器函数，确保base_url和save_path至少有一个被指定

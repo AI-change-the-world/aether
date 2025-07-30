@@ -54,7 +54,7 @@ class Input(BaseModel):
     data_type: DataType = Field(..., alias="data_type")
     data_source: DataSource = Field(..., alias="data_source")
 
-    @field_validator("data_type", pre=True)
+    @field_validator("data_type", mode="before")
     def case_insensitive(cls, v):
         if isinstance(v, str):
             v = v.lower()

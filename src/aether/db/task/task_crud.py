@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, Optional
+import json
+from typing import Any, Dict, List, Optional, Union
 
 from sqlalchemy.orm import Session
 
@@ -7,7 +8,10 @@ from aether.db.task.task import AetherTask
 
 class AetherTaskCRUD:
     @staticmethod
-    def create(session: Session, task: AetherTask) -> AetherTask:
+    def create(session: Session, task: Union[AetherTask, dict]) -> AetherTask:
+        if isinstance(task, dict):
+            task = AetherTask(**task)
+
         session.add(task)
         session.commit()
         session.refresh(task)

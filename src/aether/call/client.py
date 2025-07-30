@@ -6,7 +6,7 @@ import torch
 from aether.api.request import AetherRequest, RegisterModelRequest
 from aether.call.model import ModelConfig
 from aether.common.logger import logger
-from aether.db import get_session
+from aether.db.basic import get_session
 from aether.db.task.task_crud import AetherTaskCRUD
 from aether.db.tool_model.tool_model_crud import AetherToolModelCRUD
 from aether.utils.object_match import is_object_match
@@ -56,8 +56,7 @@ class Client(__BasicClient):
         auto_dispose (bool, optional): 是否自动释放资源，默认为False
     """
 
-    def __init__(self, config: ModelConfig, auto_dispose: bool = False):
-        self.config = config
+    def __init__(self, auto_dispose: bool = False):
         self.auto_dispose = auto_dispose
         self.session = get_session()
 
@@ -71,6 +70,7 @@ class Client(__BasicClient):
         task_json = {
             "task_type": "register_model",
             "status": 0,
+            "req": req.model_dump_json(),
         }
         aether_task = AetherTaskCRUD.create(self.session, task_json)
         if aether_task is None:
@@ -84,9 +84,16 @@ class Client(__BasicClient):
             )
             raise ValueError("extra is not RegisterModelRequest")
         logger.info(f"[{__task_name__}] create tool model ...")
+        model_config = {
+            "api_key": req.extra.api_key,
+            "base_url": req.extra.base_url,
+            "model_name": req.extra.model_name,
+            "model_type": req.extra.model_type,
+            "model_path": req.extra.model_path,
+        }
         aether_tool_json = {
             "tool_model_name": req.extra.model_name,
-            "tool_model_config": json.dumps(req.extra.model_config),
+            "tool_model_config": json.dumps(model_config),
             "req": json.dumps(req.extra.request_definition),
             "resp": json.dumps(req.extra.response_definition),
         }
@@ -111,6 +118,8 @@ class Client(__BasicClient):
         pass
 
     def call(self, req, **kwargs):
+        if req.task == "register_model":
+            return self.__call_register_model(req, **kwargs)
         return super().call(input, **kwargs)
 
     def re_activate(self):

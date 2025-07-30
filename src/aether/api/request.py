@@ -87,10 +87,10 @@ class AetherRequest(BaseModel, Generic[T]):
     task: str
     model_id: int = Field(default=0, alias="model_id")
     input: Optional[Input] = Field(default=None, alias="input")
-    meta: RequestMeta
+    meta: RequestMeta = Field(default=RequestMeta(), alias="meta")
     extra: Optional[T] = None
 
-    @field_validator("task", pre=True)
+    @field_validator("task", mode="before")
     def task_validate(cls, v):
         v = v.lower()
         assert v in __TASKS__, f"Invalid task: {v}"
