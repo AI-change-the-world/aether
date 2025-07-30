@@ -3,7 +3,7 @@ from typing import List, Optional, Union
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from aether.db.tool_model.tool_model import AetherToolModel
+from aether.models.tool_model.tool_model import AetherToolModel
 
 
 class AetherToolModelCRUD:

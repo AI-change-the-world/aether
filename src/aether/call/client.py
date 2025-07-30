@@ -7,8 +7,8 @@ from aether.api.request import AetherRequest, RegisterModelRequest
 from aether.call.model import ModelConfig
 from aether.common.logger import logger
 from aether.db.basic import get_session
-from aether.db.task.task_crud import AetherTaskCRUD
-from aether.db.tool_model.tool_model_crud import AetherToolModelCRUD
+from aether.models.task.task_crud import AetherTaskCRUD
+from aether.models.tool_model.tool_model_crud import AetherToolModelCRUD
 from aether.utils.object_match import is_object_match
 
 

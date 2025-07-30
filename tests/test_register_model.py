@@ -1,8 +1,10 @@
+from aether import init_db
 from aether.api.request import AetherRequest, RegisterModelRequest
 from aether.call.client import Client
 
 
 def test_register_model():
+    init_db()
     client = Client(auto_dispose=True)
     r: RegisterModelRequest = RegisterModelRequest(
         model_name="test_model",

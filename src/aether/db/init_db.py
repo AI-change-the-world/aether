@@ -20,9 +20,8 @@ def create_database_if_not_exists(db_url: str):
 
 
 def init_db(url: str = None):
+    import aether.models
     from aether.db import basic
-    from aether.db.task.task import AetherTask
-    from aether.db.tool_model.tool_model import AetherToolModel
 
     if url:
         basic.sql_url = url
@@ -33,3 +32,6 @@ def init_db(url: str = None):
     logger.info(f"init db, url: {engine.url}")
     create_database_if_not_exists(str(engine.url))
     Base.metadata.create_all(bind=engine)
+    logger.info(
+        f"注册的表：{Base.metadata.tables.keys()}",
+    )
