@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Generic, Optional
 
 from pydantic import BaseModel, Field, field_validator
@@ -13,7 +14,19 @@ __TASKS__ = [
     "chat",
     # for data augment
     "augment",
+    # finetune
+    "finetune_lora",
+    # gpu status
+    "gpu_status",
+    # register model
+    "register_model",
 ]
+
+
+class Execution(str, Enum):
+    SYNC = "sync"
+    STREAM = "stream"
+    ASYNC = "async"
 
 
 class RequestMeta(BaseModel):
@@ -23,10 +36,10 @@ class RequestMeta(BaseModel):
     用于定义请求的元数据信息，继承自BaseModel
 
     Attributes:
-        sync (bool): 是否同步执行，必填参数
+        execution (str): 执行方式， 包括 sync, stream, async
     """
 
-    sync: bool
+    execution: Execution = Field(default=Execution.SYNC, alias="execution")
 
 
 class AetherRequest(BaseModel, Generic[T]):
@@ -42,7 +55,7 @@ class AetherRequest(BaseModel, Generic[T]):
     """
 
     task: str
-    model_id: int = Field(..., alias="model_id")
+    model_id: int = Field(default=0, alias="model_id")
     input: Input
     meta: RequestMeta
     extra: Optional[T] = None
