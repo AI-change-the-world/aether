@@ -20,8 +20,10 @@ __TASKS__ = [
     "gpu_status",
     # register model
     "register_model",
-    # fetch result
-    "fetch_result",  # if Execution.ASYNC, use {"task_id": xxx} to fetch result
+    # fetch result ; if Execution.ASYNC, use {"task_id": xxx} to fetch result
+    "fetch_result",
+    # get model inormation by {"model_id": xxx}
+    "fetch_model_info",
 ]
 
 
@@ -57,9 +59,44 @@ class RegisterModelRequest(BaseModel):
         base_url (Optional[str]): 模型服务的基础URL，可选参数
         api_key (Optional[str]): 访问模型服务所需的API密钥，可选参数
         request_definition (dict): 模型请求参数定义，描述调用模型时需要的参数结构
-                                 : TODO 待完善, yolo example : {"image": "base64", ...}
+                                 : TODO 待完善, yolo example : {}
         response_definition (dict): 模型响应结果定义，描述模型返回结果的结构格式
-                                 : TODO 待完善, yolo example : {"boxes": [{"x": 0, "y": 0, "w": 100, "h": 100, "label": "person"}, ...], ...}
+                                 : TODO 待完善, yolo example :
+                                    {
+                                                "image": {
+                                                    "type": "str",
+                                                    "default": "*.png"
+                                                },
+                                                "bbox": {
+                                                    "type": "list",
+                                                    "default": "...",
+                                                    "items": {
+                                                    "type": "object",
+                                                    "fields": {
+                                                        "x": {
+                                                        "type": "int",
+                                                        "default": "..."
+                                                        },
+                                                        "y": {
+                                                        "type": "int",
+                                                        "default": "..."
+                                                        },
+                                                        "w": {
+                                                        "type": "int",
+                                                        "default": "..."
+                                                        },
+                                                        "h": {
+                                                        "type": "int",
+                                                        "default": "..."
+                                                        },
+                                                        "label": {
+                                                        "type": "str",
+                                                        "default": "..."
+                                                        }
+                                                    }
+                                                    }
+                                                }
+                                                }
     """
 
     model_name: str

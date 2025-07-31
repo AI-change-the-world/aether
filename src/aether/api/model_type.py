@@ -12,5 +12,5 @@ class ModelType(str, Enum):
     YOLO = "yolo"
     GAN = "gan"
     GROUNDING_DINO = "grounding_dino"  # support huggingface model now
-    LOCAL_LLM = "local_llm"
-    LOCAL_MLLM = "local_mllm"
+    LOCAL_OPENAI = "local_openai"
+    # LOCAL_MLLM = "local_mllm"
