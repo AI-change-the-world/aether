@@ -1,6 +1,6 @@
 import time
-from functools import wraps
 import traceback
+from functools import wraps
 from typing import Callable, Generic, Optional
 
 from pydantic import BaseModel, Field
