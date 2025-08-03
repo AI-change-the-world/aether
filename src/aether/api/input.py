@@ -16,6 +16,7 @@ class DataSource(str, Enum):
     S3 = "s3"
     LOCAL = "local"
     BASE64 = "base64"
+    NONE = "none"
 
 
 class DataType(str, Enum):
@@ -51,10 +52,10 @@ class Input(BaseModel):
     """
 
     data: str
-    data_type: DataType = Field(..., alias="data_type")
-    data_source: DataSource = Field(..., alias="data_source")
+    data_type: DataType = Field(default=DataType.TEXT, alias="data_type")
+    data_source: DataSource = Field(default=DataSource.NONE, alias="data_source")
 
-    @field_validator("data_type", pre=True)
+    @field_validator("data_type", mode="before")
     def case_insensitive(cls, v):
         if isinstance(v, str):
             v = v.lower()

@@ -8,23 +8,34 @@ os.makedirs("logs", exist_ok=True)
 # 移除默认的控制台输出
 logger.remove()
 
-# 添加文件日志（按天轮转）
+
+def emoji_format(record):
+    level = record["level"].name
+    emoji_map = {
+        "DEBUG": "🐞",
+        "INFO": "ℹ️",
+        "WARNING": "⚠️",
+        "ERROR": "❌",
+        "CRITICAL": "🔥",
+    }
+    emoji = emoji_map.get(level, "")
+    return (
+        f"<green>{record['time']:YYYY-MM-DD HH:mm:ss}</green> | "
+        f"{emoji} <level>{level:<8}</level> | "
+        f"<cyan>{record['name']}</cyan>:<cyan>{record['function']}</cyan>:<cyan>{record['line']}</cyan> - "
+        f"<level>{record['message']}</level>\n"
+    )
+
+
 logger.add(
-    "logs/{time:YYYY-MM-DD}.log",  # 每天一个文件
-    rotation="00:00",  # 每天 0 点新文件
-    retention="7 days",  # 日志保留 7 天（可选）
-    compression="zip",  # 超过保留天数的日志压缩（可选）
-    format="<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
-    "<level>{level: <8}</level> | "
-    "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
-    "<level>{message}</level>",
+    "logs/{time:YYYY-MM-DD}.log",
+    rotation="00:00",
+    retention="7 days",
+    compression="zip",
+    format=emoji_format,
     encoding="utf-8",
     level="INFO",
 )
 
-# 你也可以添加一个控制台输出
-logger.add(
-    sink=lambda msg: print(msg, end=""),  # 控制台输出
-    level="INFO",
-    format="<blue>{time:HH:mm:ss}</blue> | <level>{level}</level> | <level>{message}</level>",
-)
+# 控制台输出也加 emoji
+logger.add(sink=lambda msg: print(msg, end=""), level="INFO", format=emoji_format)

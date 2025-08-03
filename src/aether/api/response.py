@@ -1,4 +1,7 @@
-from typing import Generic, Optional
+import time
+import traceback
+from functools import wraps
+from typing import Callable, Generic, Optional
 
 from pydantic import BaseModel, Field
 
@@ -37,3 +40,42 @@ class AetherResponse(BaseModel, Generic[T]):
     output: Optional[T] = None
     meta: ResponseMeta
     error: Optional[str] = None
+
+
+def with_timing_response(func: Callable[..., T]) -> Callable[..., AetherResponse[T]]:
+    @wraps(func)
+    def wrapper(*args, **kwargs) -> AetherResponse[T]:
+        start_time = time.time()
+        try:
+            output = func(*args, **kwargs)
+            success = True
+            error = None
+        except Exception as e:
+            traceback.print_exc()
+            output = None
+            success = False
+            error = str(e)
+        end_time = time.time()
+
+        time_cost_ms = int((end_time - start_time) * 1000)
+
+        # 尝试获取 task_id（从返回值或 kwargs 中提取）
+        task_id = None
+        if success and isinstance(output, dict) and "task_id" in output:
+            task_id = output["task_id"]
+            try:
+                output.pop("task_id")
+            except:
+                pass
+        elif "aether_task" in kwargs and hasattr(
+            kwargs["aether_task"], "aether_task_id"
+        ):
+            task_id = kwargs["aether_task"].aether_task_id
+
+        meta = ResponseMeta(time_cost_ms=time_cost_ms, task_id=task_id)
+
+        return AetherResponse[T](
+            success=success, output=output if success else None, meta=meta, error=error
+        )
+
+    return wrapper
