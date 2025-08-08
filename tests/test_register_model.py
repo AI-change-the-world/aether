@@ -1,12 +1,12 @@
 from aether import init_db
 from aether.api.request import AetherRequest, RegisterModelRequest
 from aether.api.response import AetherResponse
-from aether.call.client import Client
+from aether.call.register_model_client import RegisterModelClient
 
 
 def test_register_model():
     init_db()
-    client = Client(auto_dispose=True)
+    client = RegisterModelClient()
     r: RegisterModelRequest = RegisterModelRequest(
         model_name="test_model",
         model_type="local_openai",
