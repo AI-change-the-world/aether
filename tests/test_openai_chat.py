@@ -2,13 +2,19 @@ from aether import init_db
 from aether.api.input import Input
 from aether.api.request import AetherRequest
 from aether.api.response import AetherResponse
-from aether.call.openai_client import OpenAIClient
+from aether.call import OpenAIClient
 
 
 def test_chat_openai():
     init_db()
     client = OpenAIClient(auto_dispose=True)
-    req = AetherRequest(task="chat", model_id=1, input=Input(data="hello"))
+    req = AetherRequest(
+        task="chat", model_id=1, input=Input(data="repeat what i said\nhello world")
+    )
     res = client.call(req)
-    assert isinstance(res, AetherResponse) and res.success
+    assert (
+        isinstance(res, AetherResponse)
+        and res.success
+        and "hello world" in str(res.output["output"])
+    )
     print(res.output)

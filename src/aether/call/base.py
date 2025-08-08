@@ -1,13 +1,13 @@
 import gc
-from abc import ABC, abstractmethod
-from typing import Any, Optional
+from abc import ABC
+from typing import Optional
 
 import torch
 
 from aether.api.generic import T
 from aether.api.request import AetherRequest
 from aether.api.response import AetherResponse
-from aether.call.model import ModelConfig
+from aether.call.config import BaseModelConfig
 from aether.db.basic import get_session
 
 
@@ -16,7 +16,7 @@ class BaseClient(ABC):
     """Abstract base class for all Aether clients."""
 
     def __init__(
-        self, config: Optional[ModelConfig] = None, auto_dispose: bool = False
+        self, config: Optional[BaseModelConfig] = None, auto_dispose: bool = False
     ):
         self.config = config
         self.session = get_session()
@@ -44,7 +44,9 @@ class BaseClient(ABC):
         pass
 
     @staticmethod
-    def from_config(config: ModelConfig, auto_dispose: bool = False) -> "BaseClient":
+    def from_config(
+        config: BaseModelConfig, auto_dispose: bool = False
+    ) -> "BaseClient":
         pass
 
     def call(self, req: AetherRequest, **kwargs) -> AetherResponse[T]: ...

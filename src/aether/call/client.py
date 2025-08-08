@@ -8,7 +8,7 @@ import torch
 from aether.api.generic import T
 from aether.api.request import AetherRequest, RegisterModelRequest
 from aether.api.response import AetherResponse, with_timing_response
-from aether.call.model import ModelConfig
+from aether.call.config import BaseModelConfig
 from aether.common.logger import logger
 from aether.db.basic import get_session
 from aether.models.task.task import AetherTask
@@ -57,7 +57,6 @@ class Client(__BasicClient):
     模型客户端类，用于初始化和管理模型配置
 
     Args:
-        config (ModelConfig): 模型配置对象，包含模型的相关配置信息
         auto_dispose (bool, optional): 是否自动释放资源，默认为False
     """
 
@@ -186,5 +185,5 @@ class Client(__BasicClient):
         return super().re_activate()
 
     @staticmethod
-    def from_config(config: ModelConfig, auto_dispose: bool = False):
+    def from_config(config: BaseModelConfig, auto_dispose: bool = False):
         pass
