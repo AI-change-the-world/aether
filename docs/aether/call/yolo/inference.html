@@ -31,19 +31,22 @@
             <h2>API Documentation</h2>
                 <ul class="memberlist">
             <li>
-                    <a class="class" href="#YoloInstance">YoloInstance</a>
-                            <ul class="memberlist">
-                        <li>
-                                <a class="function" href="#YoloInstance.__init__">YoloInstance</a>
-                        </li>
-                        <li>
-                                <a class="variable" href="#YoloInstance.instance">instance</a>
-                        </li>
-                        <li>
-                                <a class="variable" href="#YoloInstance.is_ultralytics">is_ultralytics</a>
-                        </li>
-                </ul>
-
+                    <a class="function" href="#letterbox_resize">letterbox_resize</a>
+            </li>
+            <li>
+                    <a class="function" href="#scale_coords">scale_coords</a>
+            </li>
+            <li>
+                    <a class="function" href="#xywh2xyxy">xywh2xyxy</a>
+            </li>
+            <li>
+                    <a class="function" href="#non_max_suppression">non_max_suppression</a>
+            </li>
+            <li>
+                    <a class="function" href="#infer_with_pt">infer_with_pt</a>
+            </li>
+            <li>
+                    <a class="function" href="#infer_with_ultralytics">infer_with_ultralytics</a>
             </li>
             <li>
                     <a class="function" href="#yolo_detect">yolo_detect</a>
@@ -69,187 +72,832 @@
 
                         <label class="view-source-button" for="mod-inference-view-source"><span>View Source</span></label>
 
-                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos"> 1</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
-</span><span id="L-2"><a href="#L-2"><span class="linenos"> 2</span></a>
-</span><span id="L-3"><a href="#L-3"><span class="linenos"> 3</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
-</span><span id="L-4"><a href="#L-4"><span class="linenos"> 4</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-</span><span id="L-5"><a href="#L-5"><span class="linenos"> 5</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">torchvision.transforms</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">T</span>
-</span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
-</span><span id="L-7"><a href="#L-7"><span class="linenos"> 7</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">torchvision.ops</span><span class="w"> </span><span class="kn">import</span> <span class="n">nms</span>
-</span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a>
-</span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">aether.call.yolo</span><span class="w"> </span><span class="kn">import</span> <span class="n">__IS_SUPERVISION_INSTALLED__</span><span class="p">,</span> <span class="n">__IS_ULTRALYTICS_INSTALLED__</span>
-</span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">aether.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
-</span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a>
-</span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a>
-</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a><span class="k">class</span><span class="w"> </span><span class="nc">YoloInstance</span><span class="p">:</span>
-</span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">is_ultralytics</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
-</span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance</span> <span class="o">=</span> <span class="n">instance</span>
-</span><span id="L-16"><a href="#L-16"><span class="linenos">16</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">is_ultralytics</span> <span class="o">=</span> <span class="n">is_ultralytics</span>
-</span><span id="L-17"><a href="#L-17"><span class="linenos">17</span></a>
-</span><span id="L-18"><a href="#L-18"><span class="linenos">18</span></a>
-</span><span id="L-19"><a href="#L-19"><span class="linenos">19</span></a><span class="k">def</span><span class="w"> </span><span class="nf">yolo_detect</span><span class="p">(</span>
-</span><span id="L-20"><a href="#L-20"><span class="linenos">20</span></a>    <span class="n">model_path_or_instance</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">YoloInstance</span><span class="p">,</span> <span class="n">img</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
-</span><span id="L-21"><a href="#L-21"><span class="linenos">21</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
-</span><span id="L-22"><a href="#L-22"><span class="linenos">22</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;If **img** is str, must be a s3 object&quot;&quot;&quot;</span>
-</span><span id="L-23"><a href="#L-23"><span class="linenos">23</span></a>
-</span><span id="L-24"><a href="#L-24"><span class="linenos">24</span></a>    <span class="k">if</span> <span class="n">img</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="L-25"><a href="#L-25"><span class="linenos">25</span></a>        <span class="c1"># TODO download from s3</span>
-</span><span id="L-26"><a href="#L-26"><span class="linenos">26</span></a>        <span class="k">pass</span>
-</span><span id="L-27"><a href="#L-27"><span class="linenos">27</span></a>
-</span><span id="L-28"><a href="#L-28"><span class="linenos">28</span></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">,</span> <span class="n">YoloInstance</span><span class="p">):</span>
-</span><span id="L-29"><a href="#L-29"><span class="linenos">29</span></a>        <span class="n">model</span> <span class="o">=</span> <span class="n">model_path_or_instance</span><span class="o">.</span><span class="n">instance</span>
-</span><span id="L-30"><a href="#L-30"><span class="linenos">30</span></a>        <span class="n">is_ultralytics</span> <span class="o">=</span> <span class="n">model_path_or_instance</span><span class="o">.</span><span class="n">is_ultralytics</span>
-</span><span id="L-31"><a href="#L-31"><span class="linenos">31</span></a>    <span class="k">else</span><span class="p">:</span>
-</span><span id="L-32"><a href="#L-32"><span class="linenos">32</span></a>        <span class="k">if</span> <span class="n">__IS_ULTRALYTICS_INSTALLED__</span><span class="p">:</span>
-</span><span id="L-33"><a href="#L-33"><span class="linenos">33</span></a>            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[yolo inference] Using ultralytics&quot;</span><span class="p">)</span>
-</span><span id="L-34"><a href="#L-34"><span class="linenos">34</span></a>            <span class="kn">from</span><span class="w"> </span><span class="nn">ultralytics</span><span class="w"> </span><span class="kn">import</span> <span class="n">YOLO</span>
-</span><span id="L-35"><a href="#L-35"><span class="linenos">35</span></a>
-</span><span id="L-36"><a href="#L-36"><span class="linenos">36</span></a>            <span class="n">model</span> <span class="o">=</span> <span class="n">YOLO</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">)</span>
-</span><span id="L-37"><a href="#L-37"><span class="linenos">37</span></a>            <span class="n">is_ultralytics</span> <span class="o">=</span> <span class="kc">True</span>
-</span><span id="L-38"><a href="#L-38"><span class="linenos">38</span></a>        <span class="k">else</span><span class="p">:</span>
-</span><span id="L-39"><a href="#L-39"><span class="linenos">39</span></a>
-</span><span id="L-40"><a href="#L-40"><span class="linenos">40</span></a>            <span class="n">is_cuda</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span>
-</span><span id="L-41"><a href="#L-41"><span class="linenos">41</span></a>            <span class="n">model</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
-</span><span id="L-42"><a href="#L-42"><span class="linenos">42</span></a>                <span class="n">model_path_or_instance</span><span class="p">,</span>
-</span><span id="L-43"><a href="#L-43"><span class="linenos">43</span></a>                <span class="n">map_location</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">is_cuda</span> <span class="k">else</span> <span class="s2">&quot;cuda&quot;</span><span class="p">),</span>
-</span><span id="L-44"><a href="#L-44"><span class="linenos">44</span></a>            <span class="p">)</span>
-</span><span id="L-45"><a href="#L-45"><span class="linenos">45</span></a>            <span class="n">net</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">model</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;model&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="n">model</span>
-</span><span id="L-46"><a href="#L-46"><span class="linenos">46</span></a>            <span class="n">net</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
-</span><span id="L-47"><a href="#L-47"><span class="linenos">47</span></a>
-</span><span id="L-48"><a href="#L-48"><span class="linenos">48</span></a>            <span class="n">transform</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">Compose</span><span class="p">(</span>
-</span><span id="L-49"><a href="#L-49"><span class="linenos">49</span></a>                <span class="p">[</span>
-</span><span id="L-50"><a href="#L-50"><span class="linenos">50</span></a>                    <span class="n">T</span><span class="o">.</span><span class="n">Resize</span><span class="p">((</span><span class="mi">640</span><span class="p">,</span> <span class="mi">640</span><span class="p">)),</span>  <span class="c1"># 注意：YOLOv8 默认是 640x640</span>
-</span><span id="L-51"><a href="#L-51"><span class="linenos">51</span></a>                    <span class="n">T</span><span class="o">.</span><span class="n">ToTensor</span><span class="p">(),</span>
-</span><span id="L-52"><a href="#L-52"><span class="linenos">52</span></a>                <span class="p">]</span>
-</span><span id="L-53"><a href="#L-53"><span class="linenos">53</span></a>            <span class="p">)</span>
-</span><span id="L-54"><a href="#L-54"><span class="linenos">54</span></a>            <span class="n">img_tensor</span> <span class="o">=</span> <span class="n">transform</span><span class="p">(</span><span class="n">img</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-</span><span id="L-55"><a href="#L-55"><span class="linenos">55</span></a>            <span class="k">if</span> <span class="n">is_cuda</span><span class="p">:</span>
-</span><span id="L-56"><a href="#L-56"><span class="linenos">56</span></a>                <span class="n">img_tensor</span> <span class="o">=</span> <span class="n">img_tensor</span><span class="o">.</span><span class="n">to</span><span class="p">()</span>
-</span><span id="L-57"><a href="#L-57"><span class="linenos">57</span></a>                <span class="n">net</span> <span class="o">=</span> <span class="n">net</span><span class="o">.</span><span class="n">to</span><span class="p">()</span>
-</span><span id="L-58"><a href="#L-58"><span class="linenos">58</span></a>            <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-</span><span id="L-59"><a href="#L-59"><span class="linenos">59</span></a>                <span class="n">pred</span> <span class="o">=</span> <span class="n">net</span><span class="p">(</span><span class="n">img_tensor</span><span class="p">)</span>
+                        <div class="pdoc-code codehilite"><pre><span></span><span id="L-1"><a href="#L-1"><span class="linenos">  1</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+</span><span id="L-2"><a href="#L-2"><span class="linenos">  2</span></a>
+</span><span id="L-3"><a href="#L-3"><span class="linenos">  3</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">cv2</span>
+</span><span id="L-4"><a href="#L-4"><span class="linenos">  4</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+</span><span id="L-5"><a href="#L-5"><span class="linenos">  5</span></a><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+</span><span id="L-6"><a href="#L-6"><span class="linenos">  6</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">PIL</span><span class="w"> </span><span class="kn">import</span> <span class="n">Image</span>
+</span><span id="L-7"><a href="#L-7"><span class="linenos">  7</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">torchvision.ops</span><span class="w"> </span><span class="kn">import</span> <span class="n">nms</span>
+</span><span id="L-8"><a href="#L-8"><span class="linenos">  8</span></a>
+</span><span id="L-9"><a href="#L-9"><span class="linenos">  9</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">aether.call.yolo</span><span class="w"> </span><span class="kn">import</span> <span class="n">__IS_SUPERVISION_INSTALLED__</span><span class="p">,</span> <span class="n">__IS_ULTRALYTICS_INSTALLED__</span>
+</span><span id="L-10"><a href="#L-10"><span class="linenos"> 10</span></a><span class="kn">from</span><span class="w"> </span><span class="nn">aether.common.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
+</span><span id="L-11"><a href="#L-11"><span class="linenos"> 11</span></a>
+</span><span id="L-12"><a href="#L-12"><span class="linenos"> 12</span></a>
+</span><span id="L-13"><a href="#L-13"><span class="linenos"> 13</span></a><span class="k">def</span><span class="w"> </span><span class="nf">letterbox_resize</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">new_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">640</span><span class="p">,</span> <span class="mi">640</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">114</span><span class="p">,</span> <span class="mi">114</span><span class="p">)):</span>
+</span><span id="L-14"><a href="#L-14"><span class="linenos"> 14</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-15"><a href="#L-15"><span class="linenos"> 15</span></a><span class="sd">    将图像按比例缩放并填充到新的形状，保持长宽比不变。</span>
+</span><span id="L-16"><a href="#L-16"><span class="linenos"> 16</span></a><span class="sd">    返回：填充后的图像，缩放比例，以及填充的偏移量 (pad_left, pad_top)。</span>
+</span><span id="L-17"><a href="#L-17"><span class="linenos"> 17</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-18"><a href="#L-18"><span class="linenos"> 18</span></a>    <span class="n">h</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
+</span><span id="L-19"><a href="#L-19"><span class="linenos"> 19</span></a>    <span class="n">new_w</span><span class="p">,</span> <span class="n">new_h</span> <span class="o">=</span> <span class="n">new_shape</span>
+</span><span id="L-20"><a href="#L-20"><span class="linenos"> 20</span></a>
+</span><span id="L-21"><a href="#L-21"><span class="linenos"> 21</span></a>    <span class="c1"># 计算缩放比例</span>
+</span><span id="L-22"><a href="#L-22"><span class="linenos"> 22</span></a>    <span class="n">scale</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">new_w</span> <span class="o">/</span> <span class="n">w</span><span class="p">,</span> <span class="n">new_h</span> <span class="o">/</span> <span class="n">h</span><span class="p">)</span>
+</span><span id="L-23"><a href="#L-23"><span class="linenos"> 23</span></a>    <span class="n">resized_w</span><span class="p">,</span> <span class="n">resized_h</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">w</span> <span class="o">*</span> <span class="n">scale</span><span class="p">)),</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">h</span> <span class="o">*</span> <span class="n">scale</span><span class="p">))</span>
+</span><span id="L-24"><a href="#L-24"><span class="linenos"> 24</span></a>
+</span><span id="L-25"><a href="#L-25"><span class="linenos"> 25</span></a>    <span class="c1"># 缩放图像</span>
+</span><span id="L-26"><a href="#L-26"><span class="linenos"> 26</span></a>    <span class="n">image_resized</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span>
+</span><span id="L-27"><a href="#L-27"><span class="linenos"> 27</span></a>        <span class="n">image</span><span class="p">,</span> <span class="p">(</span><span class="n">resized_w</span><span class="p">,</span> <span class="n">resized_h</span><span class="p">),</span> <span class="n">interpolation</span><span class="o">=</span><span class="n">cv2</span><span class="o">.</span><span class="n">INTER_LINEAR</span>
+</span><span id="L-28"><a href="#L-28"><span class="linenos"> 28</span></a>    <span class="p">)</span>
+</span><span id="L-29"><a href="#L-29"><span class="linenos"> 29</span></a>
+</span><span id="L-30"><a href="#L-30"><span class="linenos"> 30</span></a>    <span class="c1"># 计算填充大小</span>
+</span><span id="L-31"><a href="#L-31"><span class="linenos"> 31</span></a>    <span class="n">pad_w</span> <span class="o">=</span> <span class="n">new_w</span> <span class="o">-</span> <span class="n">resized_w</span>
+</span><span id="L-32"><a href="#L-32"><span class="linenos"> 32</span></a>    <span class="n">pad_h</span> <span class="o">=</span> <span class="n">new_h</span> <span class="o">-</span> <span class="n">resized_h</span>
+</span><span id="L-33"><a href="#L-33"><span class="linenos"> 33</span></a>    <span class="n">top</span><span class="p">,</span> <span class="n">bottom</span> <span class="o">=</span> <span class="n">pad_h</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">pad_h</span> <span class="o">-</span> <span class="p">(</span><span class="n">pad_h</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+</span><span id="L-34"><a href="#L-34"><span class="linenos"> 34</span></a>    <span class="n">left</span><span class="p">,</span> <span class="n">right</span> <span class="o">=</span> <span class="n">pad_w</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">pad_w</span> <span class="o">-</span> <span class="p">(</span><span class="n">pad_w</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+</span><span id="L-35"><a href="#L-35"><span class="linenos"> 35</span></a>
+</span><span id="L-36"><a href="#L-36"><span class="linenos"> 36</span></a>    <span class="c1"># 添加填充</span>
+</span><span id="L-37"><a href="#L-37"><span class="linenos"> 37</span></a>    <span class="n">image_padded</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">copyMakeBorder</span><span class="p">(</span>
+</span><span id="L-38"><a href="#L-38"><span class="linenos"> 38</span></a>        <span class="n">image_resized</span><span class="p">,</span>
+</span><span id="L-39"><a href="#L-39"><span class="linenos"> 39</span></a>        <span class="n">top</span><span class="p">,</span>
+</span><span id="L-40"><a href="#L-40"><span class="linenos"> 40</span></a>        <span class="n">bottom</span><span class="p">,</span>
+</span><span id="L-41"><a href="#L-41"><span class="linenos"> 41</span></a>        <span class="n">left</span><span class="p">,</span>
+</span><span id="L-42"><a href="#L-42"><span class="linenos"> 42</span></a>        <span class="n">right</span><span class="p">,</span>
+</span><span id="L-43"><a href="#L-43"><span class="linenos"> 43</span></a>        <span class="n">borderType</span><span class="o">=</span><span class="n">cv2</span><span class="o">.</span><span class="n">BORDER_CONSTANT</span><span class="p">,</span>
+</span><span id="L-44"><a href="#L-44"><span class="linenos"> 44</span></a>        <span class="n">value</span><span class="o">=</span><span class="n">color</span><span class="p">,</span>
+</span><span id="L-45"><a href="#L-45"><span class="linenos"> 45</span></a>    <span class="p">)</span>
+</span><span id="L-46"><a href="#L-46"><span class="linenos"> 46</span></a>
+</span><span id="L-47"><a href="#L-47"><span class="linenos"> 47</span></a>    <span class="k">return</span> <span class="n">image_padded</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">top</span>
+</span><span id="L-48"><a href="#L-48"><span class="linenos"> 48</span></a>
+</span><span id="L-49"><a href="#L-49"><span class="linenos"> 49</span></a>
+</span><span id="L-50"><a href="#L-50"><span class="linenos"> 50</span></a><span class="k">def</span><span class="w"> </span><span class="nf">scale_coords</span><span class="p">(</span><span class="n">xyxy</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">pad_left</span><span class="p">,</span> <span class="n">pad_top</span><span class="p">,</span> <span class="n">original_shape</span><span class="p">):</span>
+</span><span id="L-51"><a href="#L-51"><span class="linenos"> 51</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-52"><a href="#L-52"><span class="linenos"> 52</span></a><span class="sd">    将缩放和填充后的坐标映射回原始图像尺寸。</span>
+</span><span id="L-53"><a href="#L-53"><span class="linenos"> 53</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-54"><a href="#L-54"><span class="linenos"> 54</span></a>    <span class="c1"># 减去填充</span>
+</span><span id="L-55"><a href="#L-55"><span class="linenos"> 55</span></a>    <span class="n">xyxy</span><span class="p">[:,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]]</span> <span class="o">-=</span> <span class="n">pad_left</span>
+</span><span id="L-56"><a href="#L-56"><span class="linenos"> 56</span></a>    <span class="n">xyxy</span><span class="p">[:,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]]</span> <span class="o">-=</span> <span class="n">pad_top</span>
+</span><span id="L-57"><a href="#L-57"><span class="linenos"> 57</span></a>    <span class="c1"># 应用缩放</span>
+</span><span id="L-58"><a href="#L-58"><span class="linenos"> 58</span></a>    <span class="n">xyxy</span> <span class="o">/=</span> <span class="n">scale</span>
+</span><span id="L-59"><a href="#L-59"><span class="linenos"> 59</span></a>    <span class="c1"># 裁剪坐标以确保它们在原始图像边界内</span>
+</span><span id="L-60"><a href="#L-60"><span class="linenos"> 60</span></a>    <span class="n">xyxy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">xyxy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="n">original_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>  <span class="c1"># x1</span>
+</span><span id="L-61"><a href="#L-61"><span class="linenos"> 61</span></a>    <span class="n">xyxy</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">xyxy</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="n">original_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># y1</span>
+</span><span id="L-62"><a href="#L-62"><span class="linenos"> 62</span></a>    <span class="n">xyxy</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">xyxy</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="n">original_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>  <span class="c1"># x2</span>
+</span><span id="L-63"><a href="#L-63"><span class="linenos"> 63</span></a>    <span class="n">xyxy</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">xyxy</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="n">original_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># y2</span>
+</span><span id="L-64"><a href="#L-64"><span class="linenos"> 64</span></a>    <span class="k">return</span> <span class="n">xyxy</span>
+</span><span id="L-65"><a href="#L-65"><span class="linenos"> 65</span></a>
+</span><span id="L-66"><a href="#L-66"><span class="linenos"> 66</span></a>
+</span><span id="L-67"><a href="#L-67"><span class="linenos"> 67</span></a><span class="k">def</span><span class="w"> </span><span class="nf">xywh2xyxy</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+</span><span id="L-68"><a href="#L-68"><span class="linenos"> 68</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-69"><a href="#L-69"><span class="linenos"> 69</span></a><span class="sd">    将 [x_center, y_center, width, height] 格式的边界框转换为 [x1, y1, x2, y2] 格式。</span>
+</span><span id="L-70"><a href="#L-70"><span class="linenos"> 70</span></a><span class="sd">    (x1, y1) 是左上角, (x2, y2) 是右下角。</span>
+</span><span id="L-71"><a href="#L-71"><span class="linenos"> 71</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-72"><a href="#L-72"><span class="linenos"> 72</span></a>    <span class="n">y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</span><span id="L-73"><a href="#L-73"><span class="linenos"> 73</span></a>    <span class="n">y</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>  <span class="c1"># top left x</span>
+</span><span id="L-74"><a href="#L-74"><span class="linenos"> 74</span></a>    <span class="n">y</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>  <span class="c1"># top left y</span>
+</span><span id="L-75"><a href="#L-75"><span class="linenos"> 75</span></a>    <span class="n">y</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>  <span class="c1"># bottom right x</span>
+</span><span id="L-76"><a href="#L-76"><span class="linenos"> 76</span></a>    <span class="n">y</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>  <span class="c1"># bottom right y</span>
+</span><span id="L-77"><a href="#L-77"><span class="linenos"> 77</span></a>    <span class="k">return</span> <span class="n">y</span>
+</span><span id="L-78"><a href="#L-78"><span class="linenos"> 78</span></a>
+</span><span id="L-79"><a href="#L-79"><span class="linenos"> 79</span></a>
+</span><span id="L-80"><a href="#L-80"><span class="linenos"> 80</span></a><span class="k">def</span><span class="w"> </span><span class="nf">non_max_suppression</span><span class="p">(</span><span class="n">prediction</span><span class="p">,</span> <span class="n">conf_thres</span><span class="o">=</span><span class="mf">0.45</span><span class="p">,</span> <span class="n">iou_thres</span><span class="o">=</span><span class="mf">0.5</span><span class="p">):</span>
+</span><span id="L-81"><a href="#L-81"><span class="linenos"> 81</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-82"><a href="#L-82"><span class="linenos"> 82</span></a><span class="sd">    对 YOLO 模型输出执行非极大值抑制 (NMS)。</span>
+</span><span id="L-83"><a href="#L-83"><span class="linenos"> 83</span></a>
+</span><span id="L-84"><a href="#L-84"><span class="linenos"> 84</span></a><span class="sd">    参数:</span>
+</span><span id="L-85"><a href="#L-85"><span class="linenos"> 85</span></a><span class="sd">    - prediction: 模型的原始输出，形状为 [num_boxes, 4 + num_classes], e.g., [8400, 84]。</span>
+</span><span id="L-86"><a href="#L-86"><span class="linenos"> 86</span></a><span class="sd">    - conf_thres: 置信度阈值。</span>
+</span><span id="L-87"><a href="#L-87"><span class="linenos"> 87</span></a><span class="sd">    - iou_thres: IOU阈值。</span>
+</span><span id="L-88"><a href="#L-88"><span class="linenos"> 88</span></a>
+</span><span id="L-89"><a href="#L-89"><span class="linenos"> 89</span></a><span class="sd">    返回:</span>
+</span><span id="L-90"><a href="#L-90"><span class="linenos"> 90</span></a><span class="sd">    - detections with shape: nx6 (x1, y1, x2, y2, conf, cls)</span>
+</span><span id="L-91"><a href="#L-91"><span class="linenos"> 91</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-92"><a href="#L-92"><span class="linenos"> 92</span></a>    <span class="c1"># 1. 过滤掉置信度低的预测</span>
+</span><span id="L-93"><a href="#L-93"><span class="linenos"> 93</span></a>    <span class="c1"># 对于 YOLOv8, 类别分数本身就代表了置信度</span>
+</span><span id="L-94"><a href="#L-94"><span class="linenos"> 94</span></a>    <span class="c1"># prediction[:, 4:] 获取所有类别的分数, .max(1) 找到每个框的最高类别分数</span>
+</span><span id="L-95"><a href="#L-95"><span class="linenos"> 95</span></a>    <span class="n">max_scores</span> <span class="o">=</span> <span class="n">prediction</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">:]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="L-96"><a href="#L-96"><span class="linenos"> 96</span></a>    <span class="n">mask</span> <span class="o">=</span> <span class="n">max_scores</span> <span class="o">&gt;</span> <span class="n">conf_thres</span>
+</span><span id="L-97"><a href="#L-97"><span class="linenos"> 97</span></a>    <span class="n">prediction</span> <span class="o">=</span> <span class="n">prediction</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+</span><span id="L-98"><a href="#L-98"><span class="linenos"> 98</span></a>
+</span><span id="L-99"><a href="#L-99"><span class="linenos"> 99</span></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">prediction</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+</span><span id="L-100"><a href="#L-100"><span class="linenos">100</span></a>        <span class="k">return</span> <span class="p">[]</span>
+</span><span id="L-101"><a href="#L-101"><span class="linenos">101</span></a>
+</span><span id="L-102"><a href="#L-102"><span class="linenos">102</span></a>    <span class="c1"># 2. 将框从 (center_x, center_y, width, height) 格式转换为 (x1, y1, x2, y2) 格式</span>
+</span><span id="L-103"><a href="#L-103"><span class="linenos">103</span></a>    <span class="n">boxes_xywh</span> <span class="o">=</span> <span class="n">prediction</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">4</span><span class="p">]</span>
+</span><span id="L-104"><a href="#L-104"><span class="linenos">104</span></a>    <span class="n">boxes_xyxy</span> <span class="o">=</span> <span class="n">xywh2xyxy</span><span class="p">(</span><span class="n">boxes_xywh</span><span class="p">)</span>
+</span><span id="L-105"><a href="#L-105"><span class="linenos">105</span></a>
+</span><span id="L-106"><a href="#L-106"><span class="linenos">106</span></a>    <span class="c1"># 3. 找到每个框的最佳类别和其对应的分数</span>
+</span><span id="L-107"><a href="#L-107"><span class="linenos">107</span></a>    <span class="n">max_class_scores</span><span class="p">,</span> <span class="n">max_class_idxs</span> <span class="o">=</span> <span class="n">prediction</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">:]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="L-108"><a href="#L-108"><span class="linenos">108</span></a>
+</span><span id="L-109"><a href="#L-109"><span class="linenos">109</span></a>    <span class="c1"># 4. 准备用于 NMS 的数据 [x1, y1, x2, y2, conf, cls]</span>
+</span><span id="L-110"><a href="#L-110"><span class="linenos">110</span></a>    <span class="c1"># unsqueeze(1) 用于将维度从 [N] 变为 [N, 1] 以便拼接</span>
+</span><span id="L-111"><a href="#L-111"><span class="linenos">111</span></a>    <span class="n">dets</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+</span><span id="L-112"><a href="#L-112"><span class="linenos">112</span></a>        <span class="p">[</span>
+</span><span id="L-113"><a href="#L-113"><span class="linenos">113</span></a>            <span class="n">boxes_xyxy</span><span class="p">,</span>
+</span><span id="L-114"><a href="#L-114"><span class="linenos">114</span></a>            <span class="n">max_class_scores</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+</span><span id="L-115"><a href="#L-115"><span class="linenos">115</span></a>            <span class="n">max_class_idxs</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">(),</span>
+</span><span id="L-116"><a href="#L-116"><span class="linenos">116</span></a>        <span class="p">],</span>
+</span><span id="L-117"><a href="#L-117"><span class="linenos">117</span></a>        <span class="mi">1</span><span class="p">,</span>
+</span><span id="L-118"><a href="#L-118"><span class="linenos">118</span></a>    <span class="p">)</span>
+</span><span id="L-119"><a href="#L-119"><span class="linenos">119</span></a>
+</span><span id="L-120"><a href="#L-120"><span class="linenos">120</span></a>    <span class="c1"># 5. 执行 NMS</span>
+</span><span id="L-121"><a href="#L-121"><span class="linenos">121</span></a>    <span class="n">keep</span> <span class="o">=</span> <span class="n">nms</span><span class="p">(</span><span class="n">dets</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">4</span><span class="p">],</span> <span class="n">dets</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">],</span> <span class="n">iou_thres</span><span class="p">)</span>
+</span><span id="L-122"><a href="#L-122"><span class="linenos">122</span></a>
+</span><span id="L-123"><a href="#L-123"><span class="linenos">123</span></a>    <span class="k">return</span> <span class="n">dets</span><span class="p">[</span><span class="n">keep</span><span class="p">]</span>
+</span><span id="L-124"><a href="#L-124"><span class="linenos">124</span></a>
+</span><span id="L-125"><a href="#L-125"><span class="linenos">125</span></a>
+</span><span id="L-126"><a href="#L-126"><span class="linenos">126</span></a><span class="k">def</span><span class="w"> </span><span class="nf">infer_with_pt</span><span class="p">(</span>
+</span><span id="L-127"><a href="#L-127"><span class="linenos">127</span></a>    <span class="n">model_path_or_instance</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Any</span><span class="p">,</span>
+</span><span id="L-128"><a href="#L-128"><span class="linenos">128</span></a>    <span class="n">img</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">],</span>
+</span><span id="L-129"><a href="#L-129"><span class="linenos">129</span></a>    <span class="n">device</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cpu&quot;</span><span class="p">,</span>
+</span><span id="L-130"><a href="#L-130"><span class="linenos">130</span></a>    <span class="n">conf_thres</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">,</span>
+</span><span id="L-131"><a href="#L-131"><span class="linenos">131</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]:</span>
+</span><span id="L-132"><a href="#L-132"><span class="linenos">132</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-133"><a href="#L-133"><span class="linenos">133</span></a><span class="sd">    使用PyTorch模型对图像进行推理，返回检测到的边界框信息。</span>
+</span><span id="L-134"><a href="#L-134"><span class="linenos">134</span></a>
+</span><span id="L-135"><a href="#L-135"><span class="linenos">135</span></a><span class="sd">    参数:</span>
+</span><span id="L-136"><a href="#L-136"><span class="linenos">136</span></a><span class="sd">        model_path_or_instance (str | Any): 模型路径（字符串）或已加载的模型实例</span>
+</span><span id="L-137"><a href="#L-137"><span class="linenos">137</span></a><span class="sd">        img (Union[np.ndarray, Image.Image]): 输入图像，支持numpy数组或PIL图像</span>
+</span><span id="L-138"><a href="#L-138"><span class="linenos">138</span></a><span class="sd">        device (str, optional): 模型运行设备，默认为&quot;cpu&quot;</span>
+</span><span id="L-139"><a href="#L-139"><span class="linenos">139</span></a>
+</span><span id="L-140"><a href="#L-140"><span class="linenos">140</span></a><span class="sd">    返回:</span>
+</span><span id="L-141"><a href="#L-141"><span class="linenos">141</span></a><span class="sd">        Tuple[Any, Optional[dict]]: 第一个元素是模型数据（加载的模型或原始输入），第二个元素是包含检测结果的字典，格式如下：</span>
+</span><span id="L-142"><a href="#L-142"><span class="linenos">142</span></a><span class="sd">            {</span>
+</span><span id="L-143"><a href="#L-143"><span class="linenos">143</span></a><span class="sd">                &quot;bbox&quot;: [</span>
+</span><span id="L-144"><a href="#L-144"><span class="linenos">144</span></a><span class="sd">                    {</span>
+</span><span id="L-145"><a href="#L-145"><span class="linenos">145</span></a><span class="sd">                        &quot;x&quot;: int,         # 边界框左上角x坐标</span>
+</span><span id="L-146"><a href="#L-146"><span class="linenos">146</span></a><span class="sd">                        &quot;y&quot;: int,         # 边界框左上角y坐标</span>
+</span><span id="L-147"><a href="#L-147"><span class="linenos">147</span></a><span class="sd">                        &quot;w&quot;: int,         # 边界框宽度</span>
+</span><span id="L-148"><a href="#L-148"><span class="linenos">148</span></a><span class="sd">                        &quot;h&quot;: int,         # 边界框高度</span>
+</span><span id="L-149"><a href="#L-149"><span class="linenos">149</span></a><span class="sd">                        &quot;conf&quot;: float,    # 置信度分数</span>
+</span><span id="L-150"><a href="#L-150"><span class="linenos">150</span></a><span class="sd">                        &quot;class&quot;: int,     # 类别索引</span>
+</span><span id="L-151"><a href="#L-151"><span class="linenos">151</span></a><span class="sd">                        &quot;class_name&quot;: str # 类别名称（如果模型提供）</span>
+</span><span id="L-152"><a href="#L-152"><span class="linenos">152</span></a><span class="sd">                    },</span>
+</span><span id="L-153"><a href="#L-153"><span class="linenos">153</span></a><span class="sd">                    ...</span>
+</span><span id="L-154"><a href="#L-154"><span class="linenos">154</span></a><span class="sd">                ]</span>
+</span><span id="L-155"><a href="#L-155"><span class="linenos">155</span></a><span class="sd">            }</span>
+</span><span id="L-156"><a href="#L-156"><span class="linenos">156</span></a><span class="sd">            如果发生错误则两个返回值均为None</span>
+</span><span id="L-157"><a href="#L-157"><span class="linenos">157</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-158"><a href="#L-158"><span class="linenos">158</span></a>    <span class="n">class_names</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="L-159"><a href="#L-159"><span class="linenos">159</span></a>    <span class="k">try</span><span class="p">:</span>
+</span><span id="L-160"><a href="#L-160"><span class="linenos">160</span></a>        <span class="c1"># 加载模型：根据输入类型决定是从路径加载还是直接使用模型实例</span>
+</span><span id="L-161"><a href="#L-161"><span class="linenos">161</span></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="L-162"><a href="#L-162"><span class="linenos">162</span></a>            <span class="n">model_data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
+</span><span id="L-163"><a href="#L-163"><span class="linenos">163</span></a>                <span class="n">model_path_or_instance</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">weights_only</span><span class="o">=</span><span class="kc">False</span>
+</span><span id="L-164"><a href="#L-164"><span class="linenos">164</span></a>            <span class="p">)</span>
+</span><span id="L-165"><a href="#L-165"><span class="linenos">165</span></a>        <span class="k">else</span><span class="p">:</span>
+</span><span id="L-166"><a href="#L-166"><span class="linenos">166</span></a>            <span class="n">model_data</span> <span class="o">=</span> <span class="n">model_path_or_instance</span>
+</span><span id="L-167"><a href="#L-167"><span class="linenos">167</span></a>        <span class="n">net</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="L-168"><a href="#L-168"><span class="linenos">168</span></a>            <span class="n">model_data</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">]</span>
+</span><span id="L-169"><a href="#L-169"><span class="linenos">169</span></a>            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;model&quot;</span> <span class="ow">in</span> <span class="n">model_data</span>
+</span><span id="L-170"><a href="#L-170"><span class="linenos">170</span></a>            <span class="k">else</span> <span class="n">model_data</span>
+</span><span id="L-171"><a href="#L-171"><span class="linenos">171</span></a>        <span class="p">)</span>
+</span><span id="L-172"><a href="#L-172"><span class="linenos">172</span></a>        <span class="c1"># 获取类别名称（如果模型中包含）</span>
+</span><span id="L-173"><a href="#L-173"><span class="linenos">173</span></a>        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="s2">&quot;names&quot;</span><span class="p">):</span>
+</span><span id="L-174"><a href="#L-174"><span class="linenos">174</span></a>            <span class="n">class_names</span> <span class="o">=</span> <span class="n">net</span><span class="o">.</span><span class="n">names</span>
+</span><span id="L-175"><a href="#L-175"><span class="linenos">175</span></a>        <span class="n">net</span> <span class="o">=</span> <span class="n">net</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+</span><span id="L-176"><a href="#L-176"><span class="linenos">176</span></a>
+</span><span id="L-177"><a href="#L-177"><span class="linenos">177</span></a>        <span class="c1"># 图像预处理：统一图像格式并调整尺寸以适应模型输入要求</span>
+</span><span id="L-178"><a href="#L-178"><span class="linenos">178</span></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">):</span>
+</span><span id="L-179"><a href="#L-179"><span class="linenos">179</span></a>            <span class="n">img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+</span><span id="L-180"><a href="#L-180"><span class="linenos">180</span></a>        <span class="n">img_input</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">pad_left</span><span class="p">,</span> <span class="n">pad_top</span> <span class="o">=</span> <span class="n">letterbox_resize</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="p">(</span><span class="mi">640</span><span class="p">,</span> <span class="mi">640</span><span class="p">))</span>
+</span><span id="L-181"><a href="#L-181"><span class="linenos">181</span></a>
+</span><span id="L-182"><a href="#L-182"><span class="linenos">182</span></a>        <span class="c1"># 转换为模型输入格式 (HWC -&gt; CHW, BGR -&gt; RGB)</span>
+</span><span id="L-183"><a href="#L-183"><span class="linenos">183</span></a>        <span class="n">img</span> <span class="o">=</span> <span class="n">img_input</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</span><span id="L-184"><a href="#L-184"><span class="linenos">184</span></a>        <span class="n">img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ascontiguousarray</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>  <span class="c1"># 转换为连续内存布局</span>
+</span><span id="L-185"><a href="#L-185"><span class="linenos">185</span></a>        <span class="n">img</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">img</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span> <span class="o">/</span> <span class="mf">255.0</span>
+</span><span id="L-186"><a href="#L-186"><span class="linenos">186</span></a>        <span class="n">img_tensor</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+</span><span id="L-187"><a href="#L-187"><span class="linenos">187</span></a>
+</span><span id="L-188"><a href="#L-188"><span class="linenos">188</span></a>        <span class="c1"># 执行模型推理：通过前向传播获取预测结果</span>
+</span><span id="L-189"><a href="#L-189"><span class="linenos">189</span></a>        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+</span><span id="L-190"><a href="#L-190"><span class="linenos">190</span></a>            <span class="c1"># 原始输出形状为 [1, 84, 8400]</span>
+</span><span id="L-191"><a href="#L-191"><span class="linenos">191</span></a>            <span class="n">preds</span> <span class="o">=</span> <span class="n">net</span><span class="p">(</span><span class="n">img_tensor</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="L-192"><a href="#L-192"><span class="linenos">192</span></a>        <span class="n">preds</span> <span class="o">=</span> <span class="n">preds</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</span><span id="L-193"><a href="#L-193"><span class="linenos">193</span></a>
+</span><span id="L-194"><a href="#L-194"><span class="linenos">194</span></a>        <span class="n">results</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;bbox&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+</span><span id="L-195"><a href="#L-195"><span class="linenos">195</span></a>
+</span><span id="L-196"><a href="#L-196"><span class="linenos">196</span></a>        <span class="c1"># 应用非极大值抑制(NMS)过滤重复检测框</span>
+</span><span id="L-197"><a href="#L-197"><span class="linenos">197</span></a>        <span class="n">detections</span> <span class="o">=</span> <span class="n">non_max_suppression</span><span class="p">(</span><span class="n">preds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">conf_thres</span><span class="o">=</span><span class="mf">0.45</span><span class="p">,</span> <span class="n">iou_thres</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+</span><span id="L-198"><a href="#L-198"><span class="linenos">198</span></a>
+</span><span id="L-199"><a href="#L-199"><span class="linenos">199</span></a>        <span class="c1"># 处理检测结果：将边界框映射回原图空间，并提取置信度和类别信息</span>
+</span><span id="L-200"><a href="#L-200"><span class="linenos">200</span></a>        <span class="k">if</span> <span class="n">detections</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">detections</span><span class="p">):</span>
+</span><span id="L-201"><a href="#L-201"><span class="linenos">201</span></a>            <span class="c1"># 将坐标映射回原图</span>
+</span><span id="L-202"><a href="#L-202"><span class="linenos">202</span></a>            <span class="n">xyxy_boxes</span> <span class="o">=</span> <span class="n">detections</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+</span><span id="L-203"><a href="#L-203"><span class="linenos">203</span></a>            <span class="n">xyxy_boxes</span> <span class="o">=</span> <span class="n">scale_coords</span><span class="p">(</span><span class="n">xyxy_boxes</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">pad_left</span><span class="p">,</span> <span class="n">pad_top</span><span class="p">,</span> <span class="n">img</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</span><span id="L-204"><a href="#L-204"><span class="linenos">204</span></a>
+</span><span id="L-205"><a href="#L-205"><span class="linenos">205</span></a>            <span class="n">scores</span> <span class="o">=</span> <span class="n">detections</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+</span><span id="L-206"><a href="#L-206"><span class="linenos">206</span></a>            <span class="n">classes</span> <span class="o">=</span> <span class="n">detections</span><span class="p">[:,</span> <span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+</span><span id="L-207"><a href="#L-207"><span class="linenos">207</span></a>
+</span><span id="L-208"><a href="#L-208"><span class="linenos">208</span></a>            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;检测到 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">xyxy_boxes</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个物体。&quot;</span><span class="p">)</span>
+</span><span id="L-209"><a href="#L-209"><span class="linenos">209</span></a>
+</span><span id="L-210"><a href="#L-210"><span class="linenos">210</span></a>            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">xyxy_boxes</span><span class="p">)):</span>
+</span><span id="L-211"><a href="#L-211"><span class="linenos">211</span></a>                <span class="n">box</span> <span class="o">=</span> <span class="n">xyxy_boxes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+</span><span id="L-212"><a href="#L-212"><span class="linenos">212</span></a>
+</span><span id="L-213"><a href="#L-213"><span class="linenos">213</span></a>                <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">box</span>
+</span><span id="L-214"><a href="#L-214"><span class="linenos">214</span></a>                <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">x2</span> <span class="o">-</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y2</span> <span class="o">-</span> <span class="n">y1</span>
+</span><span id="L-215"><a href="#L-215"><span class="linenos">215</span></a>                <span class="n">label</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="L-216"><a href="#L-216"><span class="linenos">216</span></a>                    <span class="sa">f</span><span class="s2">&quot;Class_</span><span class="si">{</span><span class="n">classes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span id="L-217"><a href="#L-217"><span class="linenos">217</span></a>                    <span class="k">if</span> <span class="n">class_names</span> <span class="ow">is</span> <span class="kc">None</span>
+</span><span id="L-218"><a href="#L-218"><span class="linenos">218</span></a>                    <span class="k">else</span> <span class="n">class_names</span><span class="p">[</span><span class="n">classes</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+</span><span id="L-219"><a href="#L-219"><span class="linenos">219</span></a>                <span class="p">)</span>
+</span><span id="L-220"><a href="#L-220"><span class="linenos">220</span></a>                <span class="n">score</span> <span class="o">=</span> <span class="n">scores</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+</span><span id="L-221"><a href="#L-221"><span class="linenos">221</span></a>
+</span><span id="L-222"><a href="#L-222"><span class="linenos">222</span></a>                <span class="k">if</span> <span class="n">score</span> <span class="o">&gt;</span> <span class="n">conf_thres</span><span class="p">:</span>
+</span><span id="L-223"><a href="#L-223"><span class="linenos">223</span></a>
+</span><span id="L-224"><a href="#L-224"><span class="linenos">224</span></a>                    <span class="n">results</span><span class="p">[</span><span class="s2">&quot;bbox&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+</span><span id="L-225"><a href="#L-225"><span class="linenos">225</span></a>                        <span class="p">{</span>
+</span><span id="L-226"><a href="#L-226"><span class="linenos">226</span></a>                            <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">x1</span><span class="p">),</span>
+</span><span id="L-227"><a href="#L-227"><span class="linenos">227</span></a>                            <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">y1</span><span class="p">),</span>
+</span><span id="L-228"><a href="#L-228"><span class="linenos">228</span></a>                            <span class="s2">&quot;w&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">w</span><span class="p">),</span>
+</span><span id="L-229"><a href="#L-229"><span class="linenos">229</span></a>                            <span class="s2">&quot;h&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">h</span><span class="p">),</span>
+</span><span id="L-230"><a href="#L-230"><span class="linenos">230</span></a>                            <span class="s2">&quot;conf&quot;</span><span class="p">:</span> <span class="n">score</span><span class="p">,</span>
+</span><span id="L-231"><a href="#L-231"><span class="linenos">231</span></a>                            <span class="s2">&quot;class&quot;</span><span class="p">:</span> <span class="n">classes</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+</span><span id="L-232"><a href="#L-232"><span class="linenos">232</span></a>                            <span class="s2">&quot;class_name&quot;</span><span class="p">:</span> <span class="n">label</span><span class="p">,</span>
+</span><span id="L-233"><a href="#L-233"><span class="linenos">233</span></a>                        <span class="p">}</span>
+</span><span id="L-234"><a href="#L-234"><span class="linenos">234</span></a>                    <span class="p">)</span>
+</span><span id="L-235"><a href="#L-235"><span class="linenos">235</span></a>        <span class="k">return</span> <span class="n">model_data</span><span class="p">,</span> <span class="n">results</span>
+</span><span id="L-236"><a href="#L-236"><span class="linenos">236</span></a>
+</span><span id="L-237"><a href="#L-237"><span class="linenos">237</span></a>    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+</span><span id="L-238"><a href="#L-238"><span class="linenos">238</span></a>        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+</span><span id="L-239"><a href="#L-239"><span class="linenos">239</span></a>        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+</span><span id="L-240"><a href="#L-240"><span class="linenos">240</span></a>
+</span><span id="L-241"><a href="#L-241"><span class="linenos">241</span></a>
+</span><span id="L-242"><a href="#L-242"><span class="linenos">242</span></a><span class="k">def</span><span class="w"> </span><span class="nf">infer_with_ultralytics</span><span class="p">(</span>
+</span><span id="L-243"><a href="#L-243"><span class="linenos">243</span></a>    <span class="n">model_path_or_instance</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Any</span><span class="p">,</span>
+</span><span id="L-244"><a href="#L-244"><span class="linenos">244</span></a>    <span class="n">img</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
+</span><span id="L-245"><a href="#L-245"><span class="linenos">245</span></a>    <span class="n">conf_thres</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">,</span>
+</span><span id="L-246"><a href="#L-246"><span class="linenos">246</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]:</span>
+</span><span id="L-247"><a href="#L-247"><span class="linenos">247</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-248"><a href="#L-248"><span class="linenos">248</span></a><span class="sd">    使用Ultralytics YOLO模型对图像进行推理检测</span>
+</span><span id="L-249"><a href="#L-249"><span class="linenos">249</span></a>
+</span><span id="L-250"><a href="#L-250"><span class="linenos">250</span></a><span class="sd">    参数:</span>
+</span><span id="L-251"><a href="#L-251"><span class="linenos">251</span></a><span class="sd">        model_path_or_instance (str | Any): 模型路径字符串或已加载的模型实例</span>
+</span><span id="L-252"><a href="#L-252"><span class="linenos">252</span></a><span class="sd">        img (Union[np.ndarray, Image.Image, str]): 输入图像，可以是numpy数组、PIL图像或图像路径字符串</span>
+</span><span id="L-253"><a href="#L-253"><span class="linenos">253</span></a>
+</span><span id="L-254"><a href="#L-254"><span class="linenos">254</span></a><span class="sd">    返回:</span>
+</span><span id="L-255"><a href="#L-255"><span class="linenos">255</span></a><span class="sd">        Tuple[Any, Optional[dict]]: 包含模型实例和检测结果的元组。检测结果为字典格式，键为&quot;bbox&quot;，值为边界框信息列表，每个边界框包含以下字段：</span>
+</span><span id="L-256"><a href="#L-256"><span class="linenos">256</span></a><span class="sd">            - x (int): 边界框左上角x坐标</span>
+</span><span id="L-257"><a href="#L-257"><span class="linenos">257</span></a><span class="sd">            - y (int): 边界框左上角y坐标</span>
+</span><span id="L-258"><a href="#L-258"><span class="linenos">258</span></a><span class="sd">            - w (int): 边界框宽度</span>
+</span><span id="L-259"><a href="#L-259"><span class="linenos">259</span></a><span class="sd">            - h (int): 边界框高度</span>
+</span><span id="L-260"><a href="#L-260"><span class="linenos">260</span></a><span class="sd">            - label (str): 类别名称</span>
+</span><span id="L-261"><a href="#L-261"><span class="linenos">261</span></a><span class="sd">            - confidence (float): 置信度</span>
+</span><span id="L-262"><a href="#L-262"><span class="linenos">262</span></a><span class="sd">            - class_id (int): 类别ID</span>
+</span><span id="L-263"><a href="#L-263"><span class="linenos">263</span></a><span class="sd">            如果推理失败则返回None作为第二个元素</span>
+</span><span id="L-264"><a href="#L-264"><span class="linenos">264</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-265"><a href="#L-265"><span class="linenos">265</span></a>    <span class="kn">import</span><span class="w"> </span><span class="nn">supervision</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sv</span>
+</span><span id="L-266"><a href="#L-266"><span class="linenos">266</span></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">ultralytics</span><span class="w"> </span><span class="kn">import</span> <span class="n">YOLO</span>
+</span><span id="L-267"><a href="#L-267"><span class="linenos">267</span></a>
+</span><span id="L-268"><a href="#L-268"><span class="linenos">268</span></a>    <span class="c1"># 加载模型：如果传入的是路径则加载模型，否则直接使用传入的模型实例</span>
+</span><span id="L-269"><a href="#L-269"><span class="linenos">269</span></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="L-270"><a href="#L-270"><span class="linenos">270</span></a>        <span class="n">model</span> <span class="o">=</span> <span class="n">YOLO</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">)</span>
+</span><span id="L-271"><a href="#L-271"><span class="linenos">271</span></a>    <span class="k">else</span><span class="p">:</span>
+</span><span id="L-272"><a href="#L-272"><span class="linenos">272</span></a>        <span class="n">model</span> <span class="o">=</span> <span class="n">model_path_or_instance</span>
+</span><span id="L-273"><a href="#L-273"><span class="linenos">273</span></a>
+</span><span id="L-274"><a href="#L-274"><span class="linenos">274</span></a>    <span class="c1"># 执行模型推理</span>
+</span><span id="L-275"><a href="#L-275"><span class="linenos">275</span></a>    <span class="n">res</span> <span class="o">=</span> <span class="n">model</span><span class="p">([</span><span class="n">img</span><span class="p">])</span>
+</span><span id="L-276"><a href="#L-276"><span class="linenos">276</span></a>    <span class="n">res0</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="L-277"><a href="#L-277"><span class="linenos">277</span></a>
+</span><span id="L-278"><a href="#L-278"><span class="linenos">278</span></a>    <span class="c1"># 将Ultralytics结果转换为supervision的Detections格式</span>
+</span><span id="L-279"><a href="#L-279"><span class="linenos">279</span></a>    <span class="n">d</span> <span class="o">=</span> <span class="n">sv</span><span class="o">.</span><span class="n">Detections</span><span class="o">.</span><span class="n">from_ultralytics</span><span class="p">(</span><span class="n">res0</span><span class="p">)</span>
+</span><span id="L-280"><a href="#L-280"><span class="linenos">280</span></a>
+</span><span id="L-281"><a href="#L-281"><span class="linenos">281</span></a>    <span class="c1"># 解析检测结果，提取每个边界框的信息</span>
+</span><span id="L-282"><a href="#L-282"><span class="linenos">282</span></a>    <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="L-283"><a href="#L-283"><span class="linenos">283</span></a>
+</span><span id="L-284"><a href="#L-284"><span class="linenos">284</span></a>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">xyxy</span><span class="p">)):</span>
+</span><span id="L-285"><a href="#L-285"><span class="linenos">285</span></a>        <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">xyxy</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+</span><span id="L-286"><a href="#L-286"><span class="linenos">286</span></a>        <span class="n">w</span> <span class="o">=</span> <span class="n">x2</span> <span class="o">-</span> <span class="n">x1</span>
+</span><span id="L-287"><a href="#L-287"><span class="linenos">287</span></a>        <span class="n">h</span> <span class="o">=</span> <span class="n">y2</span> <span class="o">-</span> <span class="n">y1</span>
+</span><span id="L-288"><a href="#L-288"><span class="linenos">288</span></a>        <span class="n">label</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;class_name&quot;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span>
+</span><span id="L-289"><a href="#L-289"><span class="linenos">289</span></a>        <span class="n">confidence</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">confidence</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+</span><span id="L-290"><a href="#L-290"><span class="linenos">290</span></a>        <span class="n">class_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">class_id</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+</span><span id="L-291"><a href="#L-291"><span class="linenos">291</span></a>        <span class="k">if</span> <span class="n">confidence</span> <span class="o">&gt;</span> <span class="n">conf_thres</span><span class="p">:</span>
+</span><span id="L-292"><a href="#L-292"><span class="linenos">292</span></a>            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+</span><span id="L-293"><a href="#L-293"><span class="linenos">293</span></a>                <span class="p">{</span>
+</span><span id="L-294"><a href="#L-294"><span class="linenos">294</span></a>                    <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">x1</span><span class="p">),</span>
+</span><span id="L-295"><a href="#L-295"><span class="linenos">295</span></a>                    <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">y1</span><span class="p">),</span>
+</span><span id="L-296"><a href="#L-296"><span class="linenos">296</span></a>                    <span class="s2">&quot;w&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">w</span><span class="p">),</span>
+</span><span id="L-297"><a href="#L-297"><span class="linenos">297</span></a>                    <span class="s2">&quot;h&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">h</span><span class="p">),</span>
+</span><span id="L-298"><a href="#L-298"><span class="linenos">298</span></a>                    <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="n">label</span><span class="p">,</span>
+</span><span id="L-299"><a href="#L-299"><span class="linenos">299</span></a>                    <span class="s2">&quot;confidence&quot;</span><span class="p">:</span> <span class="n">confidence</span><span class="p">,</span>
+</span><span id="L-300"><a href="#L-300"><span class="linenos">300</span></a>                    <span class="s2">&quot;class_id&quot;</span><span class="p">:</span> <span class="n">class_id</span><span class="p">,</span>
+</span><span id="L-301"><a href="#L-301"><span class="linenos">301</span></a>                <span class="p">}</span>
+</span><span id="L-302"><a href="#L-302"><span class="linenos">302</span></a>            <span class="p">)</span>
+</span><span id="L-303"><a href="#L-303"><span class="linenos">303</span></a>    <span class="k">return</span> <span class="n">model</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;bbox&quot;</span><span class="p">:</span> <span class="n">result</span><span class="p">}</span>
+</span><span id="L-304"><a href="#L-304"><span class="linenos">304</span></a>
+</span><span id="L-305"><a href="#L-305"><span class="linenos">305</span></a>
+</span><span id="L-306"><a href="#L-306"><span class="linenos">306</span></a><span class="k">def</span><span class="w"> </span><span class="nf">yolo_detect</span><span class="p">(</span>
+</span><span id="L-307"><a href="#L-307"><span class="linenos">307</span></a>    <span class="n">model_path_or_instance</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Any</span><span class="p">,</span>
+</span><span id="L-308"><a href="#L-308"><span class="linenos">308</span></a>    <span class="n">img</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">],</span>
+</span><span id="L-309"><a href="#L-309"><span class="linenos">309</span></a>    <span class="n">conf_thres</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span>
+</span><span id="L-310"><a href="#L-310"><span class="linenos">310</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]:</span>
+</span><span id="L-311"><a href="#L-311"><span class="linenos">311</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-312"><a href="#L-312"><span class="linenos">312</span></a><span class="sd">    使用YOLO模型对图像进行目标检测</span>
+</span><span id="L-313"><a href="#L-313"><span class="linenos">313</span></a>
+</span><span id="L-314"><a href="#L-314"><span class="linenos">314</span></a><span class="sd">    参数:</span>
+</span><span id="L-315"><a href="#L-315"><span class="linenos">315</span></a><span class="sd">        model_path_or_instance (str | Any): 模型路径字符串或已加载的模型实例</span>
+</span><span id="L-316"><a href="#L-316"><span class="linenos">316</span></a><span class="sd">        img (Union[np.ndarray, Image.Image]): 待检测的图像，可以是numpy数组或PIL图像对象</span>
+</span><span id="L-317"><a href="#L-317"><span class="linenos">317</span></a>
+</span><span id="L-318"><a href="#L-318"><span class="linenos">318</span></a><span class="sd">    返回:</span>
+</span><span id="L-319"><a href="#L-319"><span class="linenos">319</span></a><span class="sd">        Tuple[Any, Optional[dict]]: 检测结果元组，第一个元素为模型，第二个元素为检测结果</span>
+</span><span id="L-320"><a href="#L-320"><span class="linenos">320</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-321"><a href="#L-321"><span class="linenos">321</span></a>    <span class="c1"># 根据CUDA可用性选择运行设备</span>
+</span><span id="L-322"><a href="#L-322"><span class="linenos">322</span></a>    <span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
+</span><span id="L-323"><a href="#L-323"><span class="linenos">323</span></a>
+</span><span id="L-324"><a href="#L-324"><span class="linenos">324</span></a>    <span class="c1"># 根据依赖库的安装情况选择推理方式</span>
+</span><span id="L-325"><a href="#L-325"><span class="linenos">325</span></a>    <span class="k">if</span> <span class="n">__IS_ULTRALYTICS_INSTALLED__</span> <span class="ow">and</span> <span class="n">__IS_SUPERVISION_INSTALLED__</span><span class="p">:</span>
+</span><span id="L-326"><a href="#L-326"><span class="linenos">326</span></a>        <span class="k">return</span> <span class="n">infer_with_ultralytics</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">conf_thres</span><span class="p">)</span>
+</span><span id="L-327"><a href="#L-327"><span class="linenos">327</span></a>    <span class="k">else</span><span class="p">:</span>
+</span><span id="L-328"><a href="#L-328"><span class="linenos">328</span></a>        <span class="k">return</span> <span class="n">infer_with_pt</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">conf_thres</span><span class="p">)</span>
 </span></pre></div>
 
 
             </section>
-                <section id="YoloInstance">
-                            <input id="YoloInstance-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
-<div class="attr class">
-            
-    <span class="def">class</span>
-    <span class="name">YoloInstance</span>:
-
-                <label class="view-source-button" for="YoloInstance-view-source"><span>View Source</span></label>
-
-    </div>
-    <a class="headerlink" href="#YoloInstance"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="YoloInstance-14"><a href="#YoloInstance-14"><span class="linenos">14</span></a><span class="k">class</span><span class="w"> </span><span class="nc">YoloInstance</span><span class="p">:</span>
-</span><span id="YoloInstance-15"><a href="#YoloInstance-15"><span class="linenos">15</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">is_ultralytics</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
-</span><span id="YoloInstance-16"><a href="#YoloInstance-16"><span class="linenos">16</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance</span> <span class="o">=</span> <span class="n">instance</span>
-</span><span id="YoloInstance-17"><a href="#YoloInstance-17"><span class="linenos">17</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">is_ultralytics</span> <span class="o">=</span> <span class="n">is_ultralytics</span>
-</span></pre></div>
-
-
-    
-
-                            <div id="YoloInstance.__init__" class="classattr">
-                                        <input id="YoloInstance.__init__-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+                <section id="letterbox_resize">
+                            <input id="letterbox_resize-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
             
-        <span class="name">YoloInstance</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">instance</span><span class="p">:</span> <span class="n">Any</span>, </span><span class="param"><span class="n">is_ultralytics</span><span class="p">:</span> <span class="nb">bool</span></span>)</span>
+        <span class="def">def</span>
+        <span class="name">letterbox_resize</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">image</span>, </span><span class="param"><span class="n">new_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">640</span><span class="p">,</span> <span class="mi">640</span><span class="p">)</span>, </span><span class="param"><span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">114</span><span class="p">,</span> <span class="mi">114</span><span class="p">)</span></span><span class="return-annotation">):</span></span>
 
-                <label class="view-source-button" for="YoloInstance.__init__-view-source"><span>View Source</span></label>
+                <label class="view-source-button" for="letterbox_resize-view-source"><span>View Source</span></label>
 
     </div>
-    <a class="headerlink" href="#YoloInstance.__init__"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="YoloInstance.__init__-15"><a href="#YoloInstance.__init__-15"><span class="linenos">15</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">instance</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="n">is_ultralytics</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
-</span><span id="YoloInstance.__init__-16"><a href="#YoloInstance.__init__-16"><span class="linenos">16</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">instance</span> <span class="o">=</span> <span class="n">instance</span>
-</span><span id="YoloInstance.__init__-17"><a href="#YoloInstance.__init__-17"><span class="linenos">17</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">is_ultralytics</span> <span class="o">=</span> <span class="n">is_ultralytics</span>
+    <a class="headerlink" href="#letterbox_resize"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="letterbox_resize-14"><a href="#letterbox_resize-14"><span class="linenos">14</span></a><span class="k">def</span><span class="w"> </span><span class="nf">letterbox_resize</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">new_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">640</span><span class="p">,</span> <span class="mi">640</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">114</span><span class="p">,</span> <span class="mi">114</span><span class="p">,</span> <span class="mi">114</span><span class="p">)):</span>
+</span><span id="letterbox_resize-15"><a href="#letterbox_resize-15"><span class="linenos">15</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="letterbox_resize-16"><a href="#letterbox_resize-16"><span class="linenos">16</span></a><span class="sd">    将图像按比例缩放并填充到新的形状，保持长宽比不变。</span>
+</span><span id="letterbox_resize-17"><a href="#letterbox_resize-17"><span class="linenos">17</span></a><span class="sd">    返回：填充后的图像，缩放比例，以及填充的偏移量 (pad_left, pad_top)。</span>
+</span><span id="letterbox_resize-18"><a href="#letterbox_resize-18"><span class="linenos">18</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="letterbox_resize-19"><a href="#letterbox_resize-19"><span class="linenos">19</span></a>    <span class="n">h</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">image</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
+</span><span id="letterbox_resize-20"><a href="#letterbox_resize-20"><span class="linenos">20</span></a>    <span class="n">new_w</span><span class="p">,</span> <span class="n">new_h</span> <span class="o">=</span> <span class="n">new_shape</span>
+</span><span id="letterbox_resize-21"><a href="#letterbox_resize-21"><span class="linenos">21</span></a>
+</span><span id="letterbox_resize-22"><a href="#letterbox_resize-22"><span class="linenos">22</span></a>    <span class="c1"># 计算缩放比例</span>
+</span><span id="letterbox_resize-23"><a href="#letterbox_resize-23"><span class="linenos">23</span></a>    <span class="n">scale</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">new_w</span> <span class="o">/</span> <span class="n">w</span><span class="p">,</span> <span class="n">new_h</span> <span class="o">/</span> <span class="n">h</span><span class="p">)</span>
+</span><span id="letterbox_resize-24"><a href="#letterbox_resize-24"><span class="linenos">24</span></a>    <span class="n">resized_w</span><span class="p">,</span> <span class="n">resized_h</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">w</span> <span class="o">*</span> <span class="n">scale</span><span class="p">)),</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">h</span> <span class="o">*</span> <span class="n">scale</span><span class="p">))</span>
+</span><span id="letterbox_resize-25"><a href="#letterbox_resize-25"><span class="linenos">25</span></a>
+</span><span id="letterbox_resize-26"><a href="#letterbox_resize-26"><span class="linenos">26</span></a>    <span class="c1"># 缩放图像</span>
+</span><span id="letterbox_resize-27"><a href="#letterbox_resize-27"><span class="linenos">27</span></a>    <span class="n">image_resized</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span>
+</span><span id="letterbox_resize-28"><a href="#letterbox_resize-28"><span class="linenos">28</span></a>        <span class="n">image</span><span class="p">,</span> <span class="p">(</span><span class="n">resized_w</span><span class="p">,</span> <span class="n">resized_h</span><span class="p">),</span> <span class="n">interpolation</span><span class="o">=</span><span class="n">cv2</span><span class="o">.</span><span class="n">INTER_LINEAR</span>
+</span><span id="letterbox_resize-29"><a href="#letterbox_resize-29"><span class="linenos">29</span></a>    <span class="p">)</span>
+</span><span id="letterbox_resize-30"><a href="#letterbox_resize-30"><span class="linenos">30</span></a>
+</span><span id="letterbox_resize-31"><a href="#letterbox_resize-31"><span class="linenos">31</span></a>    <span class="c1"># 计算填充大小</span>
+</span><span id="letterbox_resize-32"><a href="#letterbox_resize-32"><span class="linenos">32</span></a>    <span class="n">pad_w</span> <span class="o">=</span> <span class="n">new_w</span> <span class="o">-</span> <span class="n">resized_w</span>
+</span><span id="letterbox_resize-33"><a href="#letterbox_resize-33"><span class="linenos">33</span></a>    <span class="n">pad_h</span> <span class="o">=</span> <span class="n">new_h</span> <span class="o">-</span> <span class="n">resized_h</span>
+</span><span id="letterbox_resize-34"><a href="#letterbox_resize-34"><span class="linenos">34</span></a>    <span class="n">top</span><span class="p">,</span> <span class="n">bottom</span> <span class="o">=</span> <span class="n">pad_h</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">pad_h</span> <span class="o">-</span> <span class="p">(</span><span class="n">pad_h</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+</span><span id="letterbox_resize-35"><a href="#letterbox_resize-35"><span class="linenos">35</span></a>    <span class="n">left</span><span class="p">,</span> <span class="n">right</span> <span class="o">=</span> <span class="n">pad_w</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="n">pad_w</span> <span class="o">-</span> <span class="p">(</span><span class="n">pad_w</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+</span><span id="letterbox_resize-36"><a href="#letterbox_resize-36"><span class="linenos">36</span></a>
+</span><span id="letterbox_resize-37"><a href="#letterbox_resize-37"><span class="linenos">37</span></a>    <span class="c1"># 添加填充</span>
+</span><span id="letterbox_resize-38"><a href="#letterbox_resize-38"><span class="linenos">38</span></a>    <span class="n">image_padded</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">copyMakeBorder</span><span class="p">(</span>
+</span><span id="letterbox_resize-39"><a href="#letterbox_resize-39"><span class="linenos">39</span></a>        <span class="n">image_resized</span><span class="p">,</span>
+</span><span id="letterbox_resize-40"><a href="#letterbox_resize-40"><span class="linenos">40</span></a>        <span class="n">top</span><span class="p">,</span>
+</span><span id="letterbox_resize-41"><a href="#letterbox_resize-41"><span class="linenos">41</span></a>        <span class="n">bottom</span><span class="p">,</span>
+</span><span id="letterbox_resize-42"><a href="#letterbox_resize-42"><span class="linenos">42</span></a>        <span class="n">left</span><span class="p">,</span>
+</span><span id="letterbox_resize-43"><a href="#letterbox_resize-43"><span class="linenos">43</span></a>        <span class="n">right</span><span class="p">,</span>
+</span><span id="letterbox_resize-44"><a href="#letterbox_resize-44"><span class="linenos">44</span></a>        <span class="n">borderType</span><span class="o">=</span><span class="n">cv2</span><span class="o">.</span><span class="n">BORDER_CONSTANT</span><span class="p">,</span>
+</span><span id="letterbox_resize-45"><a href="#letterbox_resize-45"><span class="linenos">45</span></a>        <span class="n">value</span><span class="o">=</span><span class="n">color</span><span class="p">,</span>
+</span><span id="letterbox_resize-46"><a href="#letterbox_resize-46"><span class="linenos">46</span></a>    <span class="p">)</span>
+</span><span id="letterbox_resize-47"><a href="#letterbox_resize-47"><span class="linenos">47</span></a>
+</span><span id="letterbox_resize-48"><a href="#letterbox_resize-48"><span class="linenos">48</span></a>    <span class="k">return</span> <span class="n">image_padded</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">top</span>
 </span></pre></div>
 
 
-    
+            <div class="docstring"><p>将图像按比例缩放并填充到新的形状，保持长宽比不变。
+返回：填充后的图像，缩放比例，以及填充的偏移量 (pad_left, pad_top)。</p>
+</div>
 
-                            </div>
-                            <div id="YoloInstance.instance" class="classattr">
-                                <div class="attr variable">
-            <span class="name">instance</span>
 
-        
+                </section>
+                <section id="scale_coords">
+                            <input id="scale_coords-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">scale_coords</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">xyxy</span>, </span><span class="param"><span class="n">scale</span>, </span><span class="param"><span class="n">pad_left</span>, </span><span class="param"><span class="n">pad_top</span>, </span><span class="param"><span class="n">original_shape</span></span><span class="return-annotation">):</span></span>
+
+                <label class="view-source-button" for="scale_coords-view-source"><span>View Source</span></label>
+
     </div>
-    <a class="headerlink" href="#YoloInstance.instance"></a>
-    
-    
+    <a class="headerlink" href="#scale_coords"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="scale_coords-51"><a href="#scale_coords-51"><span class="linenos">51</span></a><span class="k">def</span><span class="w"> </span><span class="nf">scale_coords</span><span class="p">(</span><span class="n">xyxy</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">pad_left</span><span class="p">,</span> <span class="n">pad_top</span><span class="p">,</span> <span class="n">original_shape</span><span class="p">):</span>
+</span><span id="scale_coords-52"><a href="#scale_coords-52"><span class="linenos">52</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="scale_coords-53"><a href="#scale_coords-53"><span class="linenos">53</span></a><span class="sd">    将缩放和填充后的坐标映射回原始图像尺寸。</span>
+</span><span id="scale_coords-54"><a href="#scale_coords-54"><span class="linenos">54</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="scale_coords-55"><a href="#scale_coords-55"><span class="linenos">55</span></a>    <span class="c1"># 减去填充</span>
+</span><span id="scale_coords-56"><a href="#scale_coords-56"><span class="linenos">56</span></a>    <span class="n">xyxy</span><span class="p">[:,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]]</span> <span class="o">-=</span> <span class="n">pad_left</span>
+</span><span id="scale_coords-57"><a href="#scale_coords-57"><span class="linenos">57</span></a>    <span class="n">xyxy</span><span class="p">[:,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]]</span> <span class="o">-=</span> <span class="n">pad_top</span>
+</span><span id="scale_coords-58"><a href="#scale_coords-58"><span class="linenos">58</span></a>    <span class="c1"># 应用缩放</span>
+</span><span id="scale_coords-59"><a href="#scale_coords-59"><span class="linenos">59</span></a>    <span class="n">xyxy</span> <span class="o">/=</span> <span class="n">scale</span>
+</span><span id="scale_coords-60"><a href="#scale_coords-60"><span class="linenos">60</span></a>    <span class="c1"># 裁剪坐标以确保它们在原始图像边界内</span>
+</span><span id="scale_coords-61"><a href="#scale_coords-61"><span class="linenos">61</span></a>    <span class="n">xyxy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">xyxy</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="n">original_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>  <span class="c1"># x1</span>
+</span><span id="scale_coords-62"><a href="#scale_coords-62"><span class="linenos">62</span></a>    <span class="n">xyxy</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">xyxy</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="n">original_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># y1</span>
+</span><span id="scale_coords-63"><a href="#scale_coords-63"><span class="linenos">63</span></a>    <span class="n">xyxy</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">xyxy</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="n">original_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>  <span class="c1"># x2</span>
+</span><span id="scale_coords-64"><a href="#scale_coords-64"><span class="linenos">64</span></a>    <span class="n">xyxy</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">xyxy</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">],</span> <span class="mi">0</span><span class="p">,</span> <span class="n">original_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># y2</span>
+</span><span id="scale_coords-65"><a href="#scale_coords-65"><span class="linenos">65</span></a>    <span class="k">return</span> <span class="n">xyxy</span>
+</span></pre></div>
 
-                            </div>
-                            <div id="YoloInstance.is_ultralytics" class="classattr">
-                                <div class="attr variable">
-            <span class="name">is_ultralytics</span>
 
-        
+            <div class="docstring"><p>将缩放和填充后的坐标映射回原始图像尺寸。</p>
+</div>
+
+
+                </section>
+                <section id="xywh2xyxy">
+                            <input id="xywh2xyxy-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">xywh2xyxy</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">x</span></span><span class="return-annotation">):</span></span>
+
+                <label class="view-source-button" for="xywh2xyxy-view-source"><span>View Source</span></label>
+
     </div>
-    <a class="headerlink" href="#YoloInstance.is_ultralytics"></a>
-    
-    
+    <a class="headerlink" href="#xywh2xyxy"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="xywh2xyxy-68"><a href="#xywh2xyxy-68"><span class="linenos">68</span></a><span class="k">def</span><span class="w"> </span><span class="nf">xywh2xyxy</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+</span><span id="xywh2xyxy-69"><a href="#xywh2xyxy-69"><span class="linenos">69</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="xywh2xyxy-70"><a href="#xywh2xyxy-70"><span class="linenos">70</span></a><span class="sd">    将 [x_center, y_center, width, height] 格式的边界框转换为 [x1, y1, x2, y2] 格式。</span>
+</span><span id="xywh2xyxy-71"><a href="#xywh2xyxy-71"><span class="linenos">71</span></a><span class="sd">    (x1, y1) 是左上角, (x2, y2) 是右下角。</span>
+</span><span id="xywh2xyxy-72"><a href="#xywh2xyxy-72"><span class="linenos">72</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="xywh2xyxy-73"><a href="#xywh2xyxy-73"><span class="linenos">73</span></a>    <span class="n">y</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</span><span id="xywh2xyxy-74"><a href="#xywh2xyxy-74"><span class="linenos">74</span></a>    <span class="n">y</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>  <span class="c1"># top left x</span>
+</span><span id="xywh2xyxy-75"><a href="#xywh2xyxy-75"><span class="linenos">75</span></a>    <span class="n">y</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>  <span class="c1"># top left y</span>
+</span><span id="xywh2xyxy-76"><a href="#xywh2xyxy-76"><span class="linenos">76</span></a>    <span class="n">y</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>  <span class="c1"># bottom right x</span>
+</span><span id="xywh2xyxy-77"><a href="#xywh2xyxy-77"><span class="linenos">77</span></a>    <span class="n">y</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span>  <span class="c1"># bottom right y</span>
+</span><span id="xywh2xyxy-78"><a href="#xywh2xyxy-78"><span class="linenos">78</span></a>    <span class="k">return</span> <span class="n">y</span>
+</span></pre></div>
 
-                            </div>
+
+            <div class="docstring"><p>将 [x_center, y_center, width, height] 格式的边界框转换为 [x1, y1, x2, y2] 格式。
+(x1, y1) 是左上角, (x2, y2) 是右下角。</p>
+</div>
+
+
+                </section>
+                <section id="non_max_suppression">
+                            <input id="non_max_suppression-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">non_max_suppression</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">prediction</span>, </span><span class="param"><span class="n">conf_thres</span><span class="o">=</span><span class="mf">0.45</span>, </span><span class="param"><span class="n">iou_thres</span><span class="o">=</span><span class="mf">0.5</span></span><span class="return-annotation">):</span></span>
+
+                <label class="view-source-button" for="non_max_suppression-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#non_max_suppression"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="non_max_suppression-81"><a href="#non_max_suppression-81"><span class="linenos"> 81</span></a><span class="k">def</span><span class="w"> </span><span class="nf">non_max_suppression</span><span class="p">(</span><span class="n">prediction</span><span class="p">,</span> <span class="n">conf_thres</span><span class="o">=</span><span class="mf">0.45</span><span class="p">,</span> <span class="n">iou_thres</span><span class="o">=</span><span class="mf">0.5</span><span class="p">):</span>
+</span><span id="non_max_suppression-82"><a href="#non_max_suppression-82"><span class="linenos"> 82</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="non_max_suppression-83"><a href="#non_max_suppression-83"><span class="linenos"> 83</span></a><span class="sd">    对 YOLO 模型输出执行非极大值抑制 (NMS)。</span>
+</span><span id="non_max_suppression-84"><a href="#non_max_suppression-84"><span class="linenos"> 84</span></a>
+</span><span id="non_max_suppression-85"><a href="#non_max_suppression-85"><span class="linenos"> 85</span></a><span class="sd">    参数:</span>
+</span><span id="non_max_suppression-86"><a href="#non_max_suppression-86"><span class="linenos"> 86</span></a><span class="sd">    - prediction: 模型的原始输出，形状为 [num_boxes, 4 + num_classes], e.g., [8400, 84]。</span>
+</span><span id="non_max_suppression-87"><a href="#non_max_suppression-87"><span class="linenos"> 87</span></a><span class="sd">    - conf_thres: 置信度阈值。</span>
+</span><span id="non_max_suppression-88"><a href="#non_max_suppression-88"><span class="linenos"> 88</span></a><span class="sd">    - iou_thres: IOU阈值。</span>
+</span><span id="non_max_suppression-89"><a href="#non_max_suppression-89"><span class="linenos"> 89</span></a>
+</span><span id="non_max_suppression-90"><a href="#non_max_suppression-90"><span class="linenos"> 90</span></a><span class="sd">    返回:</span>
+</span><span id="non_max_suppression-91"><a href="#non_max_suppression-91"><span class="linenos"> 91</span></a><span class="sd">    - detections with shape: nx6 (x1, y1, x2, y2, conf, cls)</span>
+</span><span id="non_max_suppression-92"><a href="#non_max_suppression-92"><span class="linenos"> 92</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="non_max_suppression-93"><a href="#non_max_suppression-93"><span class="linenos"> 93</span></a>    <span class="c1"># 1. 过滤掉置信度低的预测</span>
+</span><span id="non_max_suppression-94"><a href="#non_max_suppression-94"><span class="linenos"> 94</span></a>    <span class="c1"># 对于 YOLOv8, 类别分数本身就代表了置信度</span>
+</span><span id="non_max_suppression-95"><a href="#non_max_suppression-95"><span class="linenos"> 95</span></a>    <span class="c1"># prediction[:, 4:] 获取所有类别的分数, .max(1) 找到每个框的最高类别分数</span>
+</span><span id="non_max_suppression-96"><a href="#non_max_suppression-96"><span class="linenos"> 96</span></a>    <span class="n">max_scores</span> <span class="o">=</span> <span class="n">prediction</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">:]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="non_max_suppression-97"><a href="#non_max_suppression-97"><span class="linenos"> 97</span></a>    <span class="n">mask</span> <span class="o">=</span> <span class="n">max_scores</span> <span class="o">&gt;</span> <span class="n">conf_thres</span>
+</span><span id="non_max_suppression-98"><a href="#non_max_suppression-98"><span class="linenos"> 98</span></a>    <span class="n">prediction</span> <span class="o">=</span> <span class="n">prediction</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+</span><span id="non_max_suppression-99"><a href="#non_max_suppression-99"><span class="linenos"> 99</span></a>
+</span><span id="non_max_suppression-100"><a href="#non_max_suppression-100"><span class="linenos">100</span></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">prediction</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+</span><span id="non_max_suppression-101"><a href="#non_max_suppression-101"><span class="linenos">101</span></a>        <span class="k">return</span> <span class="p">[]</span>
+</span><span id="non_max_suppression-102"><a href="#non_max_suppression-102"><span class="linenos">102</span></a>
+</span><span id="non_max_suppression-103"><a href="#non_max_suppression-103"><span class="linenos">103</span></a>    <span class="c1"># 2. 将框从 (center_x, center_y, width, height) 格式转换为 (x1, y1, x2, y2) 格式</span>
+</span><span id="non_max_suppression-104"><a href="#non_max_suppression-104"><span class="linenos">104</span></a>    <span class="n">boxes_xywh</span> <span class="o">=</span> <span class="n">prediction</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">4</span><span class="p">]</span>
+</span><span id="non_max_suppression-105"><a href="#non_max_suppression-105"><span class="linenos">105</span></a>    <span class="n">boxes_xyxy</span> <span class="o">=</span> <span class="n">xywh2xyxy</span><span class="p">(</span><span class="n">boxes_xywh</span><span class="p">)</span>
+</span><span id="non_max_suppression-106"><a href="#non_max_suppression-106"><span class="linenos">106</span></a>
+</span><span id="non_max_suppression-107"><a href="#non_max_suppression-107"><span class="linenos">107</span></a>    <span class="c1"># 3. 找到每个框的最佳类别和其对应的分数</span>
+</span><span id="non_max_suppression-108"><a href="#non_max_suppression-108"><span class="linenos">108</span></a>    <span class="n">max_class_scores</span><span class="p">,</span> <span class="n">max_class_idxs</span> <span class="o">=</span> <span class="n">prediction</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">:]</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+</span><span id="non_max_suppression-109"><a href="#non_max_suppression-109"><span class="linenos">109</span></a>
+</span><span id="non_max_suppression-110"><a href="#non_max_suppression-110"><span class="linenos">110</span></a>    <span class="c1"># 4. 准备用于 NMS 的数据 [x1, y1, x2, y2, conf, cls]</span>
+</span><span id="non_max_suppression-111"><a href="#non_max_suppression-111"><span class="linenos">111</span></a>    <span class="c1"># unsqueeze(1) 用于将维度从 [N] 变为 [N, 1] 以便拼接</span>
+</span><span id="non_max_suppression-112"><a href="#non_max_suppression-112"><span class="linenos">112</span></a>    <span class="n">dets</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+</span><span id="non_max_suppression-113"><a href="#non_max_suppression-113"><span class="linenos">113</span></a>        <span class="p">[</span>
+</span><span id="non_max_suppression-114"><a href="#non_max_suppression-114"><span class="linenos">114</span></a>            <span class="n">boxes_xyxy</span><span class="p">,</span>
+</span><span id="non_max_suppression-115"><a href="#non_max_suppression-115"><span class="linenos">115</span></a>            <span class="n">max_class_scores</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+</span><span id="non_max_suppression-116"><a href="#non_max_suppression-116"><span class="linenos">116</span></a>            <span class="n">max_class_idxs</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">(),</span>
+</span><span id="non_max_suppression-117"><a href="#non_max_suppression-117"><span class="linenos">117</span></a>        <span class="p">],</span>
+</span><span id="non_max_suppression-118"><a href="#non_max_suppression-118"><span class="linenos">118</span></a>        <span class="mi">1</span><span class="p">,</span>
+</span><span id="non_max_suppression-119"><a href="#non_max_suppression-119"><span class="linenos">119</span></a>    <span class="p">)</span>
+</span><span id="non_max_suppression-120"><a href="#non_max_suppression-120"><span class="linenos">120</span></a>
+</span><span id="non_max_suppression-121"><a href="#non_max_suppression-121"><span class="linenos">121</span></a>    <span class="c1"># 5. 执行 NMS</span>
+</span><span id="non_max_suppression-122"><a href="#non_max_suppression-122"><span class="linenos">122</span></a>    <span class="n">keep</span> <span class="o">=</span> <span class="n">nms</span><span class="p">(</span><span class="n">dets</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">4</span><span class="p">],</span> <span class="n">dets</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">],</span> <span class="n">iou_thres</span><span class="p">)</span>
+</span><span id="non_max_suppression-123"><a href="#non_max_suppression-123"><span class="linenos">123</span></a>
+</span><span id="non_max_suppression-124"><a href="#non_max_suppression-124"><span class="linenos">124</span></a>    <span class="k">return</span> <span class="n">dets</span><span class="p">[</span><span class="n">keep</span><span class="p">]</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>对 YOLO 模型输出执行非极大值抑制 (NMS)。</p>
+
+<p>参数:</p>
+
+<ul>
+<li>prediction: 模型的原始输出，形状为 [num_boxes, 4 + num_classes], e.g., [8400, 84]。</li>
+<li>conf_thres: 置信度阈值。</li>
+<li>iou_thres: IOU阈值。</li>
+</ul>
+
+<p>返回:</p>
+
+<ul>
+<li>detections with shape: nx6 (x1, y1, x2, y2, conf, cls)</li>
+</ul>
+</div>
+
+
+                </section>
+                <section id="infer_with_pt">
+                            <input id="infer_with_pt-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">infer_with_pt</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">model_path_or_instance</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>,</span><span class="param">	<span class="n">img</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">PIL</span><span class="o">.</span><span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">]</span>,</span><span class="param">	<span class="n">device</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;cpu&#39;</span>,</span><span class="param">	<span class="n">conf_thres</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.25</span></span><span class="return-annotation">) -> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]</span>:</span></span>
+
+                <label class="view-source-button" for="infer_with_pt-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#infer_with_pt"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="infer_with_pt-127"><a href="#infer_with_pt-127"><span class="linenos">127</span></a><span class="k">def</span><span class="w"> </span><span class="nf">infer_with_pt</span><span class="p">(</span>
+</span><span id="infer_with_pt-128"><a href="#infer_with_pt-128"><span class="linenos">128</span></a>    <span class="n">model_path_or_instance</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Any</span><span class="p">,</span>
+</span><span id="infer_with_pt-129"><a href="#infer_with_pt-129"><span class="linenos">129</span></a>    <span class="n">img</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">],</span>
+</span><span id="infer_with_pt-130"><a href="#infer_with_pt-130"><span class="linenos">130</span></a>    <span class="n">device</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cpu&quot;</span><span class="p">,</span>
+</span><span id="infer_with_pt-131"><a href="#infer_with_pt-131"><span class="linenos">131</span></a>    <span class="n">conf_thres</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">,</span>
+</span><span id="infer_with_pt-132"><a href="#infer_with_pt-132"><span class="linenos">132</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]:</span>
+</span><span id="infer_with_pt-133"><a href="#infer_with_pt-133"><span class="linenos">133</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="infer_with_pt-134"><a href="#infer_with_pt-134"><span class="linenos">134</span></a><span class="sd">    使用PyTorch模型对图像进行推理，返回检测到的边界框信息。</span>
+</span><span id="infer_with_pt-135"><a href="#infer_with_pt-135"><span class="linenos">135</span></a>
+</span><span id="infer_with_pt-136"><a href="#infer_with_pt-136"><span class="linenos">136</span></a><span class="sd">    参数:</span>
+</span><span id="infer_with_pt-137"><a href="#infer_with_pt-137"><span class="linenos">137</span></a><span class="sd">        model_path_or_instance (str | Any): 模型路径（字符串）或已加载的模型实例</span>
+</span><span id="infer_with_pt-138"><a href="#infer_with_pt-138"><span class="linenos">138</span></a><span class="sd">        img (Union[np.ndarray, Image.Image]): 输入图像，支持numpy数组或PIL图像</span>
+</span><span id="infer_with_pt-139"><a href="#infer_with_pt-139"><span class="linenos">139</span></a><span class="sd">        device (str, optional): 模型运行设备，默认为&quot;cpu&quot;</span>
+</span><span id="infer_with_pt-140"><a href="#infer_with_pt-140"><span class="linenos">140</span></a>
+</span><span id="infer_with_pt-141"><a href="#infer_with_pt-141"><span class="linenos">141</span></a><span class="sd">    返回:</span>
+</span><span id="infer_with_pt-142"><a href="#infer_with_pt-142"><span class="linenos">142</span></a><span class="sd">        Tuple[Any, Optional[dict]]: 第一个元素是模型数据（加载的模型或原始输入），第二个元素是包含检测结果的字典，格式如下：</span>
+</span><span id="infer_with_pt-143"><a href="#infer_with_pt-143"><span class="linenos">143</span></a><span class="sd">            {</span>
+</span><span id="infer_with_pt-144"><a href="#infer_with_pt-144"><span class="linenos">144</span></a><span class="sd">                &quot;bbox&quot;: [</span>
+</span><span id="infer_with_pt-145"><a href="#infer_with_pt-145"><span class="linenos">145</span></a><span class="sd">                    {</span>
+</span><span id="infer_with_pt-146"><a href="#infer_with_pt-146"><span class="linenos">146</span></a><span class="sd">                        &quot;x&quot;: int,         # 边界框左上角x坐标</span>
+</span><span id="infer_with_pt-147"><a href="#infer_with_pt-147"><span class="linenos">147</span></a><span class="sd">                        &quot;y&quot;: int,         # 边界框左上角y坐标</span>
+</span><span id="infer_with_pt-148"><a href="#infer_with_pt-148"><span class="linenos">148</span></a><span class="sd">                        &quot;w&quot;: int,         # 边界框宽度</span>
+</span><span id="infer_with_pt-149"><a href="#infer_with_pt-149"><span class="linenos">149</span></a><span class="sd">                        &quot;h&quot;: int,         # 边界框高度</span>
+</span><span id="infer_with_pt-150"><a href="#infer_with_pt-150"><span class="linenos">150</span></a><span class="sd">                        &quot;conf&quot;: float,    # 置信度分数</span>
+</span><span id="infer_with_pt-151"><a href="#infer_with_pt-151"><span class="linenos">151</span></a><span class="sd">                        &quot;class&quot;: int,     # 类别索引</span>
+</span><span id="infer_with_pt-152"><a href="#infer_with_pt-152"><span class="linenos">152</span></a><span class="sd">                        &quot;class_name&quot;: str # 类别名称（如果模型提供）</span>
+</span><span id="infer_with_pt-153"><a href="#infer_with_pt-153"><span class="linenos">153</span></a><span class="sd">                    },</span>
+</span><span id="infer_with_pt-154"><a href="#infer_with_pt-154"><span class="linenos">154</span></a><span class="sd">                    ...</span>
+</span><span id="infer_with_pt-155"><a href="#infer_with_pt-155"><span class="linenos">155</span></a><span class="sd">                ]</span>
+</span><span id="infer_with_pt-156"><a href="#infer_with_pt-156"><span class="linenos">156</span></a><span class="sd">            }</span>
+</span><span id="infer_with_pt-157"><a href="#infer_with_pt-157"><span class="linenos">157</span></a><span class="sd">            如果发生错误则两个返回值均为None</span>
+</span><span id="infer_with_pt-158"><a href="#infer_with_pt-158"><span class="linenos">158</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="infer_with_pt-159"><a href="#infer_with_pt-159"><span class="linenos">159</span></a>    <span class="n">class_names</span> <span class="o">=</span> <span class="kc">None</span>
+</span><span id="infer_with_pt-160"><a href="#infer_with_pt-160"><span class="linenos">160</span></a>    <span class="k">try</span><span class="p">:</span>
+</span><span id="infer_with_pt-161"><a href="#infer_with_pt-161"><span class="linenos">161</span></a>        <span class="c1"># 加载模型：根据输入类型决定是从路径加载还是直接使用模型实例</span>
+</span><span id="infer_with_pt-162"><a href="#infer_with_pt-162"><span class="linenos">162</span></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="infer_with_pt-163"><a href="#infer_with_pt-163"><span class="linenos">163</span></a>            <span class="n">model_data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
+</span><span id="infer_with_pt-164"><a href="#infer_with_pt-164"><span class="linenos">164</span></a>                <span class="n">model_path_or_instance</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">weights_only</span><span class="o">=</span><span class="kc">False</span>
+</span><span id="infer_with_pt-165"><a href="#infer_with_pt-165"><span class="linenos">165</span></a>            <span class="p">)</span>
+</span><span id="infer_with_pt-166"><a href="#infer_with_pt-166"><span class="linenos">166</span></a>        <span class="k">else</span><span class="p">:</span>
+</span><span id="infer_with_pt-167"><a href="#infer_with_pt-167"><span class="linenos">167</span></a>            <span class="n">model_data</span> <span class="o">=</span> <span class="n">model_path_or_instance</span>
+</span><span id="infer_with_pt-168"><a href="#infer_with_pt-168"><span class="linenos">168</span></a>        <span class="n">net</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="infer_with_pt-169"><a href="#infer_with_pt-169"><span class="linenos">169</span></a>            <span class="n">model_data</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">]</span>
+</span><span id="infer_with_pt-170"><a href="#infer_with_pt-170"><span class="linenos">170</span></a>            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_data</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span> <span class="ow">and</span> <span class="s2">&quot;model&quot;</span> <span class="ow">in</span> <span class="n">model_data</span>
+</span><span id="infer_with_pt-171"><a href="#infer_with_pt-171"><span class="linenos">171</span></a>            <span class="k">else</span> <span class="n">model_data</span>
+</span><span id="infer_with_pt-172"><a href="#infer_with_pt-172"><span class="linenos">172</span></a>        <span class="p">)</span>
+</span><span id="infer_with_pt-173"><a href="#infer_with_pt-173"><span class="linenos">173</span></a>        <span class="c1"># 获取类别名称（如果模型中包含）</span>
+</span><span id="infer_with_pt-174"><a href="#infer_with_pt-174"><span class="linenos">174</span></a>        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">net</span><span class="p">,</span> <span class="s2">&quot;names&quot;</span><span class="p">):</span>
+</span><span id="infer_with_pt-175"><a href="#infer_with_pt-175"><span class="linenos">175</span></a>            <span class="n">class_names</span> <span class="o">=</span> <span class="n">net</span><span class="o">.</span><span class="n">names</span>
+</span><span id="infer_with_pt-176"><a href="#infer_with_pt-176"><span class="linenos">176</span></a>        <span class="n">net</span> <span class="o">=</span> <span class="n">net</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+</span><span id="infer_with_pt-177"><a href="#infer_with_pt-177"><span class="linenos">177</span></a>
+</span><span id="infer_with_pt-178"><a href="#infer_with_pt-178"><span class="linenos">178</span></a>        <span class="c1"># 图像预处理：统一图像格式并调整尺寸以适应模型输入要求</span>
+</span><span id="infer_with_pt-179"><a href="#infer_with_pt-179"><span class="linenos">179</span></a>        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">):</span>
+</span><span id="infer_with_pt-180"><a href="#infer_with_pt-180"><span class="linenos">180</span></a>            <span class="n">img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+</span><span id="infer_with_pt-181"><a href="#infer_with_pt-181"><span class="linenos">181</span></a>        <span class="n">img_input</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">pad_left</span><span class="p">,</span> <span class="n">pad_top</span> <span class="o">=</span> <span class="n">letterbox_resize</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="p">(</span><span class="mi">640</span><span class="p">,</span> <span class="mi">640</span><span class="p">))</span>
+</span><span id="infer_with_pt-182"><a href="#infer_with_pt-182"><span class="linenos">182</span></a>
+</span><span id="infer_with_pt-183"><a href="#infer_with_pt-183"><span class="linenos">183</span></a>        <span class="c1"># 转换为模型输入格式 (HWC -&gt; CHW, BGR -&gt; RGB)</span>
+</span><span id="infer_with_pt-184"><a href="#infer_with_pt-184"><span class="linenos">184</span></a>        <span class="n">img</span> <span class="o">=</span> <span class="n">img_input</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</span><span id="infer_with_pt-185"><a href="#infer_with_pt-185"><span class="linenos">185</span></a>        <span class="n">img</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ascontiguousarray</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>  <span class="c1"># 转换为连续内存布局</span>
+</span><span id="infer_with_pt-186"><a href="#infer_with_pt-186"><span class="linenos">186</span></a>        <span class="n">img</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">img</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span> <span class="o">/</span> <span class="mf">255.0</span>
+</span><span id="infer_with_pt-187"><a href="#infer_with_pt-187"><span class="linenos">187</span></a>        <span class="n">img_tensor</span> <span class="o">=</span> <span class="n">img</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+</span><span id="infer_with_pt-188"><a href="#infer_with_pt-188"><span class="linenos">188</span></a>
+</span><span id="infer_with_pt-189"><a href="#infer_with_pt-189"><span class="linenos">189</span></a>        <span class="c1"># 执行模型推理：通过前向传播获取预测结果</span>
+</span><span id="infer_with_pt-190"><a href="#infer_with_pt-190"><span class="linenos">190</span></a>        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+</span><span id="infer_with_pt-191"><a href="#infer_with_pt-191"><span class="linenos">191</span></a>            <span class="c1"># 原始输出形状为 [1, 84, 8400]</span>
+</span><span id="infer_with_pt-192"><a href="#infer_with_pt-192"><span class="linenos">192</span></a>            <span class="n">preds</span> <span class="o">=</span> <span class="n">net</span><span class="p">(</span><span class="n">img_tensor</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="infer_with_pt-193"><a href="#infer_with_pt-193"><span class="linenos">193</span></a>        <span class="n">preds</span> <span class="o">=</span> <span class="n">preds</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</span><span id="infer_with_pt-194"><a href="#infer_with_pt-194"><span class="linenos">194</span></a>
+</span><span id="infer_with_pt-195"><a href="#infer_with_pt-195"><span class="linenos">195</span></a>        <span class="n">results</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;bbox&quot;</span><span class="p">:</span> <span class="p">[]}</span>
+</span><span id="infer_with_pt-196"><a href="#infer_with_pt-196"><span class="linenos">196</span></a>
+</span><span id="infer_with_pt-197"><a href="#infer_with_pt-197"><span class="linenos">197</span></a>        <span class="c1"># 应用非极大值抑制(NMS)过滤重复检测框</span>
+</span><span id="infer_with_pt-198"><a href="#infer_with_pt-198"><span class="linenos">198</span></a>        <span class="n">detections</span> <span class="o">=</span> <span class="n">non_max_suppression</span><span class="p">(</span><span class="n">preds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">conf_thres</span><span class="o">=</span><span class="mf">0.45</span><span class="p">,</span> <span class="n">iou_thres</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+</span><span id="infer_with_pt-199"><a href="#infer_with_pt-199"><span class="linenos">199</span></a>
+</span><span id="infer_with_pt-200"><a href="#infer_with_pt-200"><span class="linenos">200</span></a>        <span class="c1"># 处理检测结果：将边界框映射回原图空间，并提取置信度和类别信息</span>
+</span><span id="infer_with_pt-201"><a href="#infer_with_pt-201"><span class="linenos">201</span></a>        <span class="k">if</span> <span class="n">detections</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">detections</span><span class="p">):</span>
+</span><span id="infer_with_pt-202"><a href="#infer_with_pt-202"><span class="linenos">202</span></a>            <span class="c1"># 将坐标映射回原图</span>
+</span><span id="infer_with_pt-203"><a href="#infer_with_pt-203"><span class="linenos">203</span></a>            <span class="n">xyxy_boxes</span> <span class="o">=</span> <span class="n">detections</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+</span><span id="infer_with_pt-204"><a href="#infer_with_pt-204"><span class="linenos">204</span></a>            <span class="n">xyxy_boxes</span> <span class="o">=</span> <span class="n">scale_coords</span><span class="p">(</span><span class="n">xyxy_boxes</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">pad_left</span><span class="p">,</span> <span class="n">pad_top</span><span class="p">,</span> <span class="n">img</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</span><span id="infer_with_pt-205"><a href="#infer_with_pt-205"><span class="linenos">205</span></a>
+</span><span id="infer_with_pt-206"><a href="#infer_with_pt-206"><span class="linenos">206</span></a>            <span class="n">scores</span> <span class="o">=</span> <span class="n">detections</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+</span><span id="infer_with_pt-207"><a href="#infer_with_pt-207"><span class="linenos">207</span></a>            <span class="n">classes</span> <span class="o">=</span> <span class="n">detections</span><span class="p">[:,</span> <span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+</span><span id="infer_with_pt-208"><a href="#infer_with_pt-208"><span class="linenos">208</span></a>
+</span><span id="infer_with_pt-209"><a href="#infer_with_pt-209"><span class="linenos">209</span></a>            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;检测到 </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">xyxy_boxes</span><span class="p">)</span><span class="si">}</span><span class="s2"> 个物体。&quot;</span><span class="p">)</span>
+</span><span id="infer_with_pt-210"><a href="#infer_with_pt-210"><span class="linenos">210</span></a>
+</span><span id="infer_with_pt-211"><a href="#infer_with_pt-211"><span class="linenos">211</span></a>            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">xyxy_boxes</span><span class="p">)):</span>
+</span><span id="infer_with_pt-212"><a href="#infer_with_pt-212"><span class="linenos">212</span></a>                <span class="n">box</span> <span class="o">=</span> <span class="n">xyxy_boxes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+</span><span id="infer_with_pt-213"><a href="#infer_with_pt-213"><span class="linenos">213</span></a>
+</span><span id="infer_with_pt-214"><a href="#infer_with_pt-214"><span class="linenos">214</span></a>                <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">box</span>
+</span><span id="infer_with_pt-215"><a href="#infer_with_pt-215"><span class="linenos">215</span></a>                <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">x2</span> <span class="o">-</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y2</span> <span class="o">-</span> <span class="n">y1</span>
+</span><span id="infer_with_pt-216"><a href="#infer_with_pt-216"><span class="linenos">216</span></a>                <span class="n">label</span> <span class="o">=</span> <span class="p">(</span>
+</span><span id="infer_with_pt-217"><a href="#infer_with_pt-217"><span class="linenos">217</span></a>                    <span class="sa">f</span><span class="s2">&quot;Class_</span><span class="si">{</span><span class="n">classes</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+</span><span id="infer_with_pt-218"><a href="#infer_with_pt-218"><span class="linenos">218</span></a>                    <span class="k">if</span> <span class="n">class_names</span> <span class="ow">is</span> <span class="kc">None</span>
+</span><span id="infer_with_pt-219"><a href="#infer_with_pt-219"><span class="linenos">219</span></a>                    <span class="k">else</span> <span class="n">class_names</span><span class="p">[</span><span class="n">classes</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span>
+</span><span id="infer_with_pt-220"><a href="#infer_with_pt-220"><span class="linenos">220</span></a>                <span class="p">)</span>
+</span><span id="infer_with_pt-221"><a href="#infer_with_pt-221"><span class="linenos">221</span></a>                <span class="n">score</span> <span class="o">=</span> <span class="n">scores</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+</span><span id="infer_with_pt-222"><a href="#infer_with_pt-222"><span class="linenos">222</span></a>
+</span><span id="infer_with_pt-223"><a href="#infer_with_pt-223"><span class="linenos">223</span></a>                <span class="k">if</span> <span class="n">score</span> <span class="o">&gt;</span> <span class="n">conf_thres</span><span class="p">:</span>
+</span><span id="infer_with_pt-224"><a href="#infer_with_pt-224"><span class="linenos">224</span></a>
+</span><span id="infer_with_pt-225"><a href="#infer_with_pt-225"><span class="linenos">225</span></a>                    <span class="n">results</span><span class="p">[</span><span class="s2">&quot;bbox&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+</span><span id="infer_with_pt-226"><a href="#infer_with_pt-226"><span class="linenos">226</span></a>                        <span class="p">{</span>
+</span><span id="infer_with_pt-227"><a href="#infer_with_pt-227"><span class="linenos">227</span></a>                            <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">x1</span><span class="p">),</span>
+</span><span id="infer_with_pt-228"><a href="#infer_with_pt-228"><span class="linenos">228</span></a>                            <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">y1</span><span class="p">),</span>
+</span><span id="infer_with_pt-229"><a href="#infer_with_pt-229"><span class="linenos">229</span></a>                            <span class="s2">&quot;w&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">w</span><span class="p">),</span>
+</span><span id="infer_with_pt-230"><a href="#infer_with_pt-230"><span class="linenos">230</span></a>                            <span class="s2">&quot;h&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">h</span><span class="p">),</span>
+</span><span id="infer_with_pt-231"><a href="#infer_with_pt-231"><span class="linenos">231</span></a>                            <span class="s2">&quot;conf&quot;</span><span class="p">:</span> <span class="n">score</span><span class="p">,</span>
+</span><span id="infer_with_pt-232"><a href="#infer_with_pt-232"><span class="linenos">232</span></a>                            <span class="s2">&quot;class&quot;</span><span class="p">:</span> <span class="n">classes</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+</span><span id="infer_with_pt-233"><a href="#infer_with_pt-233"><span class="linenos">233</span></a>                            <span class="s2">&quot;class_name&quot;</span><span class="p">:</span> <span class="n">label</span><span class="p">,</span>
+</span><span id="infer_with_pt-234"><a href="#infer_with_pt-234"><span class="linenos">234</span></a>                        <span class="p">}</span>
+</span><span id="infer_with_pt-235"><a href="#infer_with_pt-235"><span class="linenos">235</span></a>                    <span class="p">)</span>
+</span><span id="infer_with_pt-236"><a href="#infer_with_pt-236"><span class="linenos">236</span></a>        <span class="k">return</span> <span class="n">model_data</span><span class="p">,</span> <span class="n">results</span>
+</span><span id="infer_with_pt-237"><a href="#infer_with_pt-237"><span class="linenos">237</span></a>
+</span><span id="infer_with_pt-238"><a href="#infer_with_pt-238"><span class="linenos">238</span></a>    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+</span><span id="infer_with_pt-239"><a href="#infer_with_pt-239"><span class="linenos">239</span></a>        <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+</span><span id="infer_with_pt-240"><a href="#infer_with_pt-240"><span class="linenos">240</span></a>        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>使用PyTorch模型对图像进行推理，返回检测到的边界框信息。</p>
+
+<p>参数:
+    model_path_or_instance (str | Any): 模型路径（字符串）或已加载的模型实例
+    img (Union[np.ndarray, Image.Image]): 输入图像，支持numpy数组或PIL图像
+    device (str, optional): 模型运行设备，默认为"cpu"</p>
+
+<p>返回:
+    Tuple[Any, Optional[dict]]: 第一个元素是模型数据（加载的模型或原始输入），第二个元素是包含检测结果的字典，格式如下：
+        {
+            "bbox": [
+                {
+                    "x": int,         # 边界框左上角x坐标
+                    "y": int,         # 边界框左上角y坐标
+                    "w": int,         # 边界框宽度
+                    "h": int,         # 边界框高度
+                    "conf": float,    # 置信度分数
+                    "class": int,     # 类别索引
+                    "class_name": str # 类别名称（如果模型提供）
+                },
+                ...
+            ]
+        }
+        如果发生错误则两个返回值均为None</p>
+</div>
+
+
+                </section>
+                <section id="infer_with_ultralytics">
+                            <input id="infer_with_ultralytics-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">infer_with_ultralytics</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">model_path_or_instance</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>,</span><span class="param">	<span class="n">img</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">PIL</span><span class="o">.</span><span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>,</span><span class="param">	<span class="n">conf_thres</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.25</span></span><span class="return-annotation">) -> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]</span>:</span></span>
+
+                <label class="view-source-button" for="infer_with_ultralytics-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#infer_with_ultralytics"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="infer_with_ultralytics-243"><a href="#infer_with_ultralytics-243"><span class="linenos">243</span></a><span class="k">def</span><span class="w"> </span><span class="nf">infer_with_ultralytics</span><span class="p">(</span>
+</span><span id="infer_with_ultralytics-244"><a href="#infer_with_ultralytics-244"><span class="linenos">244</span></a>    <span class="n">model_path_or_instance</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Any</span><span class="p">,</span>
+</span><span id="infer_with_ultralytics-245"><a href="#infer_with_ultralytics-245"><span class="linenos">245</span></a>    <span class="n">img</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
+</span><span id="infer_with_ultralytics-246"><a href="#infer_with_ultralytics-246"><span class="linenos">246</span></a>    <span class="n">conf_thres</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.25</span><span class="p">,</span>
+</span><span id="infer_with_ultralytics-247"><a href="#infer_with_ultralytics-247"><span class="linenos">247</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]:</span>
+</span><span id="infer_with_ultralytics-248"><a href="#infer_with_ultralytics-248"><span class="linenos">248</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="infer_with_ultralytics-249"><a href="#infer_with_ultralytics-249"><span class="linenos">249</span></a><span class="sd">    使用Ultralytics YOLO模型对图像进行推理检测</span>
+</span><span id="infer_with_ultralytics-250"><a href="#infer_with_ultralytics-250"><span class="linenos">250</span></a>
+</span><span id="infer_with_ultralytics-251"><a href="#infer_with_ultralytics-251"><span class="linenos">251</span></a><span class="sd">    参数:</span>
+</span><span id="infer_with_ultralytics-252"><a href="#infer_with_ultralytics-252"><span class="linenos">252</span></a><span class="sd">        model_path_or_instance (str | Any): 模型路径字符串或已加载的模型实例</span>
+</span><span id="infer_with_ultralytics-253"><a href="#infer_with_ultralytics-253"><span class="linenos">253</span></a><span class="sd">        img (Union[np.ndarray, Image.Image, str]): 输入图像，可以是numpy数组、PIL图像或图像路径字符串</span>
+</span><span id="infer_with_ultralytics-254"><a href="#infer_with_ultralytics-254"><span class="linenos">254</span></a>
+</span><span id="infer_with_ultralytics-255"><a href="#infer_with_ultralytics-255"><span class="linenos">255</span></a><span class="sd">    返回:</span>
+</span><span id="infer_with_ultralytics-256"><a href="#infer_with_ultralytics-256"><span class="linenos">256</span></a><span class="sd">        Tuple[Any, Optional[dict]]: 包含模型实例和检测结果的元组。检测结果为字典格式，键为&quot;bbox&quot;，值为边界框信息列表，每个边界框包含以下字段：</span>
+</span><span id="infer_with_ultralytics-257"><a href="#infer_with_ultralytics-257"><span class="linenos">257</span></a><span class="sd">            - x (int): 边界框左上角x坐标</span>
+</span><span id="infer_with_ultralytics-258"><a href="#infer_with_ultralytics-258"><span class="linenos">258</span></a><span class="sd">            - y (int): 边界框左上角y坐标</span>
+</span><span id="infer_with_ultralytics-259"><a href="#infer_with_ultralytics-259"><span class="linenos">259</span></a><span class="sd">            - w (int): 边界框宽度</span>
+</span><span id="infer_with_ultralytics-260"><a href="#infer_with_ultralytics-260"><span class="linenos">260</span></a><span class="sd">            - h (int): 边界框高度</span>
+</span><span id="infer_with_ultralytics-261"><a href="#infer_with_ultralytics-261"><span class="linenos">261</span></a><span class="sd">            - label (str): 类别名称</span>
+</span><span id="infer_with_ultralytics-262"><a href="#infer_with_ultralytics-262"><span class="linenos">262</span></a><span class="sd">            - confidence (float): 置信度</span>
+</span><span id="infer_with_ultralytics-263"><a href="#infer_with_ultralytics-263"><span class="linenos">263</span></a><span class="sd">            - class_id (int): 类别ID</span>
+</span><span id="infer_with_ultralytics-264"><a href="#infer_with_ultralytics-264"><span class="linenos">264</span></a><span class="sd">            如果推理失败则返回None作为第二个元素</span>
+</span><span id="infer_with_ultralytics-265"><a href="#infer_with_ultralytics-265"><span class="linenos">265</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="infer_with_ultralytics-266"><a href="#infer_with_ultralytics-266"><span class="linenos">266</span></a>    <span class="kn">import</span><span class="w"> </span><span class="nn">supervision</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sv</span>
+</span><span id="infer_with_ultralytics-267"><a href="#infer_with_ultralytics-267"><span class="linenos">267</span></a>    <span class="kn">from</span><span class="w"> </span><span class="nn">ultralytics</span><span class="w"> </span><span class="kn">import</span> <span class="n">YOLO</span>
+</span><span id="infer_with_ultralytics-268"><a href="#infer_with_ultralytics-268"><span class="linenos">268</span></a>
+</span><span id="infer_with_ultralytics-269"><a href="#infer_with_ultralytics-269"><span class="linenos">269</span></a>    <span class="c1"># 加载模型：如果传入的是路径则加载模型，否则直接使用传入的模型实例</span>
+</span><span id="infer_with_ultralytics-270"><a href="#infer_with_ultralytics-270"><span class="linenos">270</span></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="infer_with_ultralytics-271"><a href="#infer_with_ultralytics-271"><span class="linenos">271</span></a>        <span class="n">model</span> <span class="o">=</span> <span class="n">YOLO</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">)</span>
+</span><span id="infer_with_ultralytics-272"><a href="#infer_with_ultralytics-272"><span class="linenos">272</span></a>    <span class="k">else</span><span class="p">:</span>
+</span><span id="infer_with_ultralytics-273"><a href="#infer_with_ultralytics-273"><span class="linenos">273</span></a>        <span class="n">model</span> <span class="o">=</span> <span class="n">model_path_or_instance</span>
+</span><span id="infer_with_ultralytics-274"><a href="#infer_with_ultralytics-274"><span class="linenos">274</span></a>
+</span><span id="infer_with_ultralytics-275"><a href="#infer_with_ultralytics-275"><span class="linenos">275</span></a>    <span class="c1"># 执行模型推理</span>
+</span><span id="infer_with_ultralytics-276"><a href="#infer_with_ultralytics-276"><span class="linenos">276</span></a>    <span class="n">res</span> <span class="o">=</span> <span class="n">model</span><span class="p">([</span><span class="n">img</span><span class="p">])</span>
+</span><span id="infer_with_ultralytics-277"><a href="#infer_with_ultralytics-277"><span class="linenos">277</span></a>    <span class="n">res0</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+</span><span id="infer_with_ultralytics-278"><a href="#infer_with_ultralytics-278"><span class="linenos">278</span></a>
+</span><span id="infer_with_ultralytics-279"><a href="#infer_with_ultralytics-279"><span class="linenos">279</span></a>    <span class="c1"># 将Ultralytics结果转换为supervision的Detections格式</span>
+</span><span id="infer_with_ultralytics-280"><a href="#infer_with_ultralytics-280"><span class="linenos">280</span></a>    <span class="n">d</span> <span class="o">=</span> <span class="n">sv</span><span class="o">.</span><span class="n">Detections</span><span class="o">.</span><span class="n">from_ultralytics</span><span class="p">(</span><span class="n">res0</span><span class="p">)</span>
+</span><span id="infer_with_ultralytics-281"><a href="#infer_with_ultralytics-281"><span class="linenos">281</span></a>
+</span><span id="infer_with_ultralytics-282"><a href="#infer_with_ultralytics-282"><span class="linenos">282</span></a>    <span class="c1"># 解析检测结果，提取每个边界框的信息</span>
+</span><span id="infer_with_ultralytics-283"><a href="#infer_with_ultralytics-283"><span class="linenos">283</span></a>    <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+</span><span id="infer_with_ultralytics-284"><a href="#infer_with_ultralytics-284"><span class="linenos">284</span></a>
+</span><span id="infer_with_ultralytics-285"><a href="#infer_with_ultralytics-285"><span class="linenos">285</span></a>    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">xyxy</span><span class="p">)):</span>
+</span><span id="infer_with_ultralytics-286"><a href="#infer_with_ultralytics-286"><span class="linenos">286</span></a>        <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">xyxy</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+</span><span id="infer_with_ultralytics-287"><a href="#infer_with_ultralytics-287"><span class="linenos">287</span></a>        <span class="n">w</span> <span class="o">=</span> <span class="n">x2</span> <span class="o">-</span> <span class="n">x1</span>
+</span><span id="infer_with_ultralytics-288"><a href="#infer_with_ultralytics-288"><span class="linenos">288</span></a>        <span class="n">h</span> <span class="o">=</span> <span class="n">y2</span> <span class="o">-</span> <span class="n">y1</span>
+</span><span id="infer_with_ultralytics-289"><a href="#infer_with_ultralytics-289"><span class="linenos">289</span></a>        <span class="n">label</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="s2">&quot;class_name&quot;</span><span class="p">][</span><span class="n">i</span><span class="p">]</span>
+</span><span id="infer_with_ultralytics-290"><a href="#infer_with_ultralytics-290"><span class="linenos">290</span></a>        <span class="n">confidence</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">confidence</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+</span><span id="infer_with_ultralytics-291"><a href="#infer_with_ultralytics-291"><span class="linenos">291</span></a>        <span class="n">class_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">class_id</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+</span><span id="infer_with_ultralytics-292"><a href="#infer_with_ultralytics-292"><span class="linenos">292</span></a>        <span class="k">if</span> <span class="n">confidence</span> <span class="o">&gt;</span> <span class="n">conf_thres</span><span class="p">:</span>
+</span><span id="infer_with_ultralytics-293"><a href="#infer_with_ultralytics-293"><span class="linenos">293</span></a>            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+</span><span id="infer_with_ultralytics-294"><a href="#infer_with_ultralytics-294"><span class="linenos">294</span></a>                <span class="p">{</span>
+</span><span id="infer_with_ultralytics-295"><a href="#infer_with_ultralytics-295"><span class="linenos">295</span></a>                    <span class="s2">&quot;x&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">x1</span><span class="p">),</span>
+</span><span id="infer_with_ultralytics-296"><a href="#infer_with_ultralytics-296"><span class="linenos">296</span></a>                    <span class="s2">&quot;y&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">y1</span><span class="p">),</span>
+</span><span id="infer_with_ultralytics-297"><a href="#infer_with_ultralytics-297"><span class="linenos">297</span></a>                    <span class="s2">&quot;w&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">w</span><span class="p">),</span>
+</span><span id="infer_with_ultralytics-298"><a href="#infer_with_ultralytics-298"><span class="linenos">298</span></a>                    <span class="s2">&quot;h&quot;</span><span class="p">:</span> <span class="nb">int</span><span class="p">(</span><span class="n">h</span><span class="p">),</span>
+</span><span id="infer_with_ultralytics-299"><a href="#infer_with_ultralytics-299"><span class="linenos">299</span></a>                    <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="n">label</span><span class="p">,</span>
+</span><span id="infer_with_ultralytics-300"><a href="#infer_with_ultralytics-300"><span class="linenos">300</span></a>                    <span class="s2">&quot;confidence&quot;</span><span class="p">:</span> <span class="n">confidence</span><span class="p">,</span>
+</span><span id="infer_with_ultralytics-301"><a href="#infer_with_ultralytics-301"><span class="linenos">301</span></a>                    <span class="s2">&quot;class_id&quot;</span><span class="p">:</span> <span class="n">class_id</span><span class="p">,</span>
+</span><span id="infer_with_ultralytics-302"><a href="#infer_with_ultralytics-302"><span class="linenos">302</span></a>                <span class="p">}</span>
+</span><span id="infer_with_ultralytics-303"><a href="#infer_with_ultralytics-303"><span class="linenos">303</span></a>            <span class="p">)</span>
+</span><span id="infer_with_ultralytics-304"><a href="#infer_with_ultralytics-304"><span class="linenos">304</span></a>    <span class="k">return</span> <span class="n">model</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;bbox&quot;</span><span class="p">:</span> <span class="n">result</span><span class="p">}</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>使用Ultralytics YOLO模型对图像进行推理检测</p>
+
+<p>参数:
+    model_path_or_instance (str | Any): 模型路径字符串或已加载的模型实例
+    img (Union[np.ndarray, Image.Image, str]): 输入图像，可以是numpy数组、PIL图像或图像路径字符串</p>
+
+<p>返回:
+    Tuple[Any, Optional[dict]]: 包含模型实例和检测结果的元组。检测结果为字典格式，键为"bbox"，值为边界框信息列表，每个边界框包含以下字段：
+        - x (int): 边界框左上角x坐标
+        - y (int): 边界框左上角y坐标
+        - w (int): 边界框宽度
+        - h (int): 边界框高度
+        - label (str): 类别名称
+        - confidence (float): 置信度
+        - class_id (int): 类别ID
+        如果推理失败则返回None作为第二个元素</p>
+</div>
+
+
                 </section>
                 <section id="yolo_detect">
                             <input id="yolo_detect-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
             
         <span class="def">def</span>
-        <span class="name">yolo_detect</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">model_path_or_instance</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n"><a href="#YoloInstance">YoloInstance</a></span>,</span><span class="param">	<span class="n">img</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">PIL</span><span class="o">.</span><span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]</span>:</span></span>
+        <span class="name">yolo_detect</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">model_path_or_instance</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>,</span><span class="param">	<span class="n">img</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">PIL</span><span class="o">.</span><span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">]</span>,</span><span class="param">	<span class="n">conf_thres</span><span class="o">=</span><span class="mf">0.25</span></span><span class="return-annotation">) -> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]</span>:</span></span>
 
                 <label class="view-source-button" for="yolo_detect-view-source"><span>View Source</span></label>
 
     </div>
     <a class="headerlink" href="#yolo_detect"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="yolo_detect-20"><a href="#yolo_detect-20"><span class="linenos">20</span></a><span class="k">def</span><span class="w"> </span><span class="nf">yolo_detect</span><span class="p">(</span>
-</span><span id="yolo_detect-21"><a href="#yolo_detect-21"><span class="linenos">21</span></a>    <span class="n">model_path_or_instance</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">YoloInstance</span><span class="p">,</span> <span class="n">img</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
-</span><span id="yolo_detect-22"><a href="#yolo_detect-22"><span class="linenos">22</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]:</span>
-</span><span id="yolo_detect-23"><a href="#yolo_detect-23"><span class="linenos">23</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;If **img** is str, must be a s3 object&quot;&quot;&quot;</span>
-</span><span id="yolo_detect-24"><a href="#yolo_detect-24"><span class="linenos">24</span></a>
-</span><span id="yolo_detect-25"><a href="#yolo_detect-25"><span class="linenos">25</span></a>    <span class="k">if</span> <span class="n">img</span> <span class="ow">is</span> <span class="nb">str</span><span class="p">:</span>
-</span><span id="yolo_detect-26"><a href="#yolo_detect-26"><span class="linenos">26</span></a>        <span class="c1"># TODO download from s3</span>
-</span><span id="yolo_detect-27"><a href="#yolo_detect-27"><span class="linenos">27</span></a>        <span class="k">pass</span>
-</span><span id="yolo_detect-28"><a href="#yolo_detect-28"><span class="linenos">28</span></a>
-</span><span id="yolo_detect-29"><a href="#yolo_detect-29"><span class="linenos">29</span></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">,</span> <span class="n">YoloInstance</span><span class="p">):</span>
-</span><span id="yolo_detect-30"><a href="#yolo_detect-30"><span class="linenos">30</span></a>        <span class="n">model</span> <span class="o">=</span> <span class="n">model_path_or_instance</span><span class="o">.</span><span class="n">instance</span>
-</span><span id="yolo_detect-31"><a href="#yolo_detect-31"><span class="linenos">31</span></a>        <span class="n">is_ultralytics</span> <span class="o">=</span> <span class="n">model_path_or_instance</span><span class="o">.</span><span class="n">is_ultralytics</span>
-</span><span id="yolo_detect-32"><a href="#yolo_detect-32"><span class="linenos">32</span></a>    <span class="k">else</span><span class="p">:</span>
-</span><span id="yolo_detect-33"><a href="#yolo_detect-33"><span class="linenos">33</span></a>        <span class="k">if</span> <span class="n">__IS_ULTRALYTICS_INSTALLED__</span><span class="p">:</span>
-</span><span id="yolo_detect-34"><a href="#yolo_detect-34"><span class="linenos">34</span></a>            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;[yolo inference] Using ultralytics&quot;</span><span class="p">)</span>
-</span><span id="yolo_detect-35"><a href="#yolo_detect-35"><span class="linenos">35</span></a>            <span class="kn">from</span><span class="w"> </span><span class="nn">ultralytics</span><span class="w"> </span><span class="kn">import</span> <span class="n">YOLO</span>
-</span><span id="yolo_detect-36"><a href="#yolo_detect-36"><span class="linenos">36</span></a>
-</span><span id="yolo_detect-37"><a href="#yolo_detect-37"><span class="linenos">37</span></a>            <span class="n">model</span> <span class="o">=</span> <span class="n">YOLO</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">)</span>
-</span><span id="yolo_detect-38"><a href="#yolo_detect-38"><span class="linenos">38</span></a>            <span class="n">is_ultralytics</span> <span class="o">=</span> <span class="kc">True</span>
-</span><span id="yolo_detect-39"><a href="#yolo_detect-39"><span class="linenos">39</span></a>        <span class="k">else</span><span class="p">:</span>
-</span><span id="yolo_detect-40"><a href="#yolo_detect-40"><span class="linenos">40</span></a>
-</span><span id="yolo_detect-41"><a href="#yolo_detect-41"><span class="linenos">41</span></a>            <span class="n">is_cuda</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span>
-</span><span id="yolo_detect-42"><a href="#yolo_detect-42"><span class="linenos">42</span></a>            <span class="n">model</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
-</span><span id="yolo_detect-43"><a href="#yolo_detect-43"><span class="linenos">43</span></a>                <span class="n">model_path_or_instance</span><span class="p">,</span>
-</span><span id="yolo_detect-44"><a href="#yolo_detect-44"><span class="linenos">44</span></a>                <span class="n">map_location</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">device</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">is_cuda</span> <span class="k">else</span> <span class="s2">&quot;cuda&quot;</span><span class="p">),</span>
-</span><span id="yolo_detect-45"><a href="#yolo_detect-45"><span class="linenos">45</span></a>            <span class="p">)</span>
-</span><span id="yolo_detect-46"><a href="#yolo_detect-46"><span class="linenos">46</span></a>            <span class="n">net</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">model</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;model&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="n">model</span>
-</span><span id="yolo_detect-47"><a href="#yolo_detect-47"><span class="linenos">47</span></a>            <span class="n">net</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
-</span><span id="yolo_detect-48"><a href="#yolo_detect-48"><span class="linenos">48</span></a>
-</span><span id="yolo_detect-49"><a href="#yolo_detect-49"><span class="linenos">49</span></a>            <span class="n">transform</span> <span class="o">=</span> <span class="n">T</span><span class="o">.</span><span class="n">Compose</span><span class="p">(</span>
-</span><span id="yolo_detect-50"><a href="#yolo_detect-50"><span class="linenos">50</span></a>                <span class="p">[</span>
-</span><span id="yolo_detect-51"><a href="#yolo_detect-51"><span class="linenos">51</span></a>                    <span class="n">T</span><span class="o">.</span><span class="n">Resize</span><span class="p">((</span><span class="mi">640</span><span class="p">,</span> <span class="mi">640</span><span class="p">)),</span>  <span class="c1"># 注意：YOLOv8 默认是 640x640</span>
-</span><span id="yolo_detect-52"><a href="#yolo_detect-52"><span class="linenos">52</span></a>                    <span class="n">T</span><span class="o">.</span><span class="n">ToTensor</span><span class="p">(),</span>
-</span><span id="yolo_detect-53"><a href="#yolo_detect-53"><span class="linenos">53</span></a>                <span class="p">]</span>
-</span><span id="yolo_detect-54"><a href="#yolo_detect-54"><span class="linenos">54</span></a>            <span class="p">)</span>
-</span><span id="yolo_detect-55"><a href="#yolo_detect-55"><span class="linenos">55</span></a>            <span class="n">img_tensor</span> <span class="o">=</span> <span class="n">transform</span><span class="p">(</span><span class="n">img</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-</span><span id="yolo_detect-56"><a href="#yolo_detect-56"><span class="linenos">56</span></a>            <span class="k">if</span> <span class="n">is_cuda</span><span class="p">:</span>
-</span><span id="yolo_detect-57"><a href="#yolo_detect-57"><span class="linenos">57</span></a>                <span class="n">img_tensor</span> <span class="o">=</span> <span class="n">img_tensor</span><span class="o">.</span><span class="n">to</span><span class="p">()</span>
-</span><span id="yolo_detect-58"><a href="#yolo_detect-58"><span class="linenos">58</span></a>                <span class="n">net</span> <span class="o">=</span> <span class="n">net</span><span class="o">.</span><span class="n">to</span><span class="p">()</span>
-</span><span id="yolo_detect-59"><a href="#yolo_detect-59"><span class="linenos">59</span></a>            <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-</span><span id="yolo_detect-60"><a href="#yolo_detect-60"><span class="linenos">60</span></a>                <span class="n">pred</span> <span class="o">=</span> <span class="n">net</span><span class="p">(</span><span class="n">img_tensor</span><span class="p">)</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="yolo_detect-307"><a href="#yolo_detect-307"><span class="linenos">307</span></a><span class="k">def</span><span class="w"> </span><span class="nf">yolo_detect</span><span class="p">(</span>
+</span><span id="yolo_detect-308"><a href="#yolo_detect-308"><span class="linenos">308</span></a>    <span class="n">model_path_or_instance</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Any</span><span class="p">,</span>
+</span><span id="yolo_detect-309"><a href="#yolo_detect-309"><span class="linenos">309</span></a>    <span class="n">img</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">],</span>
+</span><span id="yolo_detect-310"><a href="#yolo_detect-310"><span class="linenos">310</span></a>    <span class="n">conf_thres</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span>
+</span><span id="yolo_detect-311"><a href="#yolo_detect-311"><span class="linenos">311</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]:</span>
+</span><span id="yolo_detect-312"><a href="#yolo_detect-312"><span class="linenos">312</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="yolo_detect-313"><a href="#yolo_detect-313"><span class="linenos">313</span></a><span class="sd">    使用YOLO模型对图像进行目标检测</span>
+</span><span id="yolo_detect-314"><a href="#yolo_detect-314"><span class="linenos">314</span></a>
+</span><span id="yolo_detect-315"><a href="#yolo_detect-315"><span class="linenos">315</span></a><span class="sd">    参数:</span>
+</span><span id="yolo_detect-316"><a href="#yolo_detect-316"><span class="linenos">316</span></a><span class="sd">        model_path_or_instance (str | Any): 模型路径字符串或已加载的模型实例</span>
+</span><span id="yolo_detect-317"><a href="#yolo_detect-317"><span class="linenos">317</span></a><span class="sd">        img (Union[np.ndarray, Image.Image]): 待检测的图像，可以是numpy数组或PIL图像对象</span>
+</span><span id="yolo_detect-318"><a href="#yolo_detect-318"><span class="linenos">318</span></a>
+</span><span id="yolo_detect-319"><a href="#yolo_detect-319"><span class="linenos">319</span></a><span class="sd">    返回:</span>
+</span><span id="yolo_detect-320"><a href="#yolo_detect-320"><span class="linenos">320</span></a><span class="sd">        Tuple[Any, Optional[dict]]: 检测结果元组，第一个元素为模型，第二个元素为检测结果</span>
+</span><span id="yolo_detect-321"><a href="#yolo_detect-321"><span class="linenos">321</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="yolo_detect-322"><a href="#yolo_detect-322"><span class="linenos">322</span></a>    <span class="c1"># 根据CUDA可用性选择运行设备</span>
+</span><span id="yolo_detect-323"><a href="#yolo_detect-323"><span class="linenos">323</span></a>    <span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
+</span><span id="yolo_detect-324"><a href="#yolo_detect-324"><span class="linenos">324</span></a>
+</span><span id="yolo_detect-325"><a href="#yolo_detect-325"><span class="linenos">325</span></a>    <span class="c1"># 根据依赖库的安装情况选择推理方式</span>
+</span><span id="yolo_detect-326"><a href="#yolo_detect-326"><span class="linenos">326</span></a>    <span class="k">if</span> <span class="n">__IS_ULTRALYTICS_INSTALLED__</span> <span class="ow">and</span> <span class="n">__IS_SUPERVISION_INSTALLED__</span><span class="p">:</span>
+</span><span id="yolo_detect-327"><a href="#yolo_detect-327"><span class="linenos">327</span></a>        <span class="k">return</span> <span class="n">infer_with_ultralytics</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">conf_thres</span><span class="p">)</span>
+</span><span id="yolo_detect-328"><a href="#yolo_detect-328"><span class="linenos">328</span></a>    <span class="k">else</span><span class="p">:</span>
+</span><span id="yolo_detect-329"><a href="#yolo_detect-329"><span class="linenos">329</span></a>        <span class="k">return</span> <span class="n">infer_with_pt</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">conf_thres</span><span class="p">)</span>
 </span></pre></div>
 
 
-            <div class="docstring"><p>If <strong>img</strong> is str, must be a s3 object</p>
+            <div class="docstring"><p>使用YOLO模型对图像进行目标检测</p>
+
+<p>参数:
+    model_path_or_instance (str | Any): 模型路径字符串或已加载的模型实例
+    img (Union[np.ndarray, Image.Image]): 待检测的图像，可以是numpy数组或PIL图像对象</p>
+
+<p>返回:
+    Tuple[Any, Optional[dict]]: 检测结果元组，第一个元素为模型，第二个元素为检测结果</p>
 </div>
 
 

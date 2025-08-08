@@ -34,19 +34,43 @@
                     <a class="class" href="#ModelType">ModelType</a>
                             <ul class="memberlist">
                         <li>
-                                <a class="variable" href="#ModelType.OPENAI">OPENAI</a>
+                                <a class="variable" href="#ModelType.OPENAI_CHAT">OPENAI_CHAT</a>
                         </li>
                         <li>
-                                <a class="variable" href="#ModelType.YOLO">YOLO</a>
-                        </li>
-                        <li>
-                                <a class="variable" href="#ModelType.GAN">GAN</a>
-                        </li>
-                        <li>
-                                <a class="variable" href="#ModelType.GROUNDING_DINO">GROUNDING_DINO</a>
+                                <a class="variable" href="#ModelType.OPENAI_EMBEDDING">OPENAI_EMBEDDING</a>
                         </li>
                         <li>
                                 <a class="variable" href="#ModelType.LOCAL_OPENAI">LOCAL_OPENAI</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#ModelType.HF_CLS">HF_CLS</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#ModelType.HF_QA">HF_QA</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#ModelType.HF_SD">HF_SD</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#ModelType.HF_GROUNDING_DINO">HF_GROUNDING_DINO</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#ModelType.YOLO_ULTRA">YOLO_ULTRA</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#ModelType.YOLO_PT">YOLO_PT</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#ModelType.TORCH_GAN">TORCH_GAN</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#ModelType.TORCH_CLS">TORCH_CLS</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#ModelType.TORCH_SEG">TORCH_SEG</a>
+                        </li>
+                        <li>
+                                <a class="variable" href="#ModelType.ONNX_MODEL">ONNX_MODEL</a>
                         </li>
                 </ul>
 
@@ -77,17 +101,39 @@
 </span><span id="L-3"><a href="#L-3"><span class="linenos"> 3</span></a>
 </span><span id="L-4"><a href="#L-4"><span class="linenos"> 4</span></a><span class="k">class</span><span class="w"> </span><span class="nc">ModelType</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
 </span><span id="L-5"><a href="#L-5"><span class="linenos"> 5</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a><span class="sd">    模型类型枚举类</span>
+</span><span id="L-6"><a href="#L-6"><span class="linenos"> 6</span></a><span class="sd">    支持的模型类型枚举类</span>
 </span><span id="L-7"><a href="#L-7"><span class="linenos"> 7</span></a>
-</span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a><span class="sd">    定义了系统支持的模型类型常量</span>
-</span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a>
-</span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a>    <span class="n">OPENAI</span> <span class="o">=</span> <span class="s2">&quot;openai&quot;</span>
-</span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a>    <span class="n">YOLO</span> <span class="o">=</span> <span class="s2">&quot;yolo&quot;</span>
-</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a>    <span class="n">GAN</span> <span class="o">=</span> <span class="s2">&quot;gan&quot;</span>
-</span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a>    <span class="n">GROUNDING_DINO</span> <span class="o">=</span> <span class="s2">&quot;grounding_dino&quot;</span>  <span class="c1"># support huggingface model now</span>
-</span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a>    <span class="n">LOCAL_OPENAI</span> <span class="o">=</span> <span class="s2">&quot;local_openai&quot;</span>
-</span><span id="L-16"><a href="#L-16"><span class="linenos">16</span></a>    <span class="c1"># LOCAL_MLLM = &quot;local_mllm&quot;</span>
+</span><span id="L-8"><a href="#L-8"><span class="linenos"> 8</span></a><span class="sd">    模型类型按照使用来源或推理框架分类，例如：</span>
+</span><span id="L-9"><a href="#L-9"><span class="linenos"> 9</span></a><span class="sd">    - OPENAI_* 表示基于 OpenAI 接口的模型</span>
+</span><span id="L-10"><a href="#L-10"><span class="linenos">10</span></a><span class="sd">    - LOCAL_* 表示本地加载的模型（Torch 或其他）</span>
+</span><span id="L-11"><a href="#L-11"><span class="linenos">11</span></a><span class="sd">    - HF_* 表示基于 HuggingFace Transformers/Diffusers 的模型</span>
+</span><span id="L-12"><a href="#L-12"><span class="linenos">12</span></a><span class="sd">    - ULTRA_* 表示基于 Ultralytics YOLO 系列</span>
+</span><span id="L-13"><a href="#L-13"><span class="linenos">13</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-14"><a href="#L-14"><span class="linenos">14</span></a>
+</span><span id="L-15"><a href="#L-15"><span class="linenos">15</span></a>    <span class="c1"># OpenAI 接口类模型</span>
+</span><span id="L-16"><a href="#L-16"><span class="linenos">16</span></a>    <span class="n">OPENAI_CHAT</span> <span class="o">=</span> <span class="s2">&quot;openai_chat&quot;</span>  <span class="c1"># gpt-3.5, gpt-4 等</span>
+</span><span id="L-17"><a href="#L-17"><span class="linenos">17</span></a>    <span class="n">OPENAI_EMBEDDING</span> <span class="o">=</span> <span class="s2">&quot;openai_embedding&quot;</span>
+</span><span id="L-18"><a href="#L-18"><span class="linenos">18</span></a>
+</span><span id="L-19"><a href="#L-19"><span class="linenos">19</span></a>    <span class="c1"># 本地兼容 OpenAI 接口的大模型（如 LM Studio, OpenRouter, Local LLM）</span>
+</span><span id="L-20"><a href="#L-20"><span class="linenos">20</span></a>    <span class="n">LOCAL_OPENAI</span> <span class="o">=</span> <span class="s2">&quot;local_openai&quot;</span>
+</span><span id="L-21"><a href="#L-21"><span class="linenos">21</span></a>
+</span><span id="L-22"><a href="#L-22"><span class="linenos">22</span></a>    <span class="c1"># HuggingFace 相关模型（支持transformers/diffusers）</span>
+</span><span id="L-23"><a href="#L-23"><span class="linenos">23</span></a>    <span class="n">HF_CLS</span> <span class="o">=</span> <span class="s2">&quot;hf_cls&quot;</span>  <span class="c1"># 文本分类模型</span>
+</span><span id="L-24"><a href="#L-24"><span class="linenos">24</span></a>    <span class="n">HF_QA</span> <span class="o">=</span> <span class="s2">&quot;hf_qa&quot;</span>  <span class="c1"># 问答</span>
+</span><span id="L-25"><a href="#L-25"><span class="linenos">25</span></a>    <span class="n">HF_SD</span> <span class="o">=</span> <span class="s2">&quot;hf_stable_diffusion&quot;</span>  <span class="c1"># 文生图</span>
+</span><span id="L-26"><a href="#L-26"><span class="linenos">26</span></a>    <span class="n">HF_GROUNDING_DINO</span> <span class="o">=</span> <span class="s2">&quot;hf_grounding_dino&quot;</span>
+</span><span id="L-27"><a href="#L-27"><span class="linenos">27</span></a>
+</span><span id="L-28"><a href="#L-28"><span class="linenos">28</span></a>    <span class="c1"># YOLO 系列模型</span>
+</span><span id="L-29"><a href="#L-29"><span class="linenos">29</span></a>    <span class="n">YOLO_ULTRA</span> <span class="o">=</span> <span class="s2">&quot;yolo_ultralytics&quot;</span>  <span class="c1"># Ultralytics YOLO</span>
+</span><span id="L-30"><a href="#L-30"><span class="linenos">30</span></a>    <span class="n">YOLO_PT</span> <span class="o">=</span> <span class="s2">&quot;yolo_torch&quot;</span>  <span class="c1"># 自定义 YOLO 模型（如 yolov5.pt）</span>
+</span><span id="L-31"><a href="#L-31"><span class="linenos">31</span></a>
+</span><span id="L-32"><a href="#L-32"><span class="linenos">32</span></a>    <span class="c1"># 自定义本地模型</span>
+</span><span id="L-33"><a href="#L-33"><span class="linenos">33</span></a>    <span class="n">TORCH_GAN</span> <span class="o">=</span> <span class="s2">&quot;torch_gan&quot;</span>
+</span><span id="L-34"><a href="#L-34"><span class="linenos">34</span></a>    <span class="n">TORCH_CLS</span> <span class="o">=</span> <span class="s2">&quot;torch_classification&quot;</span>
+</span><span id="L-35"><a href="#L-35"><span class="linenos">35</span></a>    <span class="n">TORCH_SEG</span> <span class="o">=</span> <span class="s2">&quot;torch_segmentation&quot;</span>
+</span><span id="L-36"><a href="#L-36"><span class="linenos">36</span></a>
+</span><span id="L-37"><a href="#L-37"><span class="linenos">37</span></a>    <span class="c1"># ONNX 推理模型（可选）</span>
+</span><span id="L-38"><a href="#L-38"><span class="linenos">38</span></a>    <span class="n">ONNX_MODEL</span> <span class="o">=</span> <span class="s2">&quot;onnx_model&quot;</span>
 </span></pre></div>
 
 
@@ -105,70 +151,75 @@
     <a class="headerlink" href="#ModelType"></a>
             <div class="pdoc-code codehilite"><pre><span></span><span id="ModelType-5"><a href="#ModelType-5"><span class="linenos"> 5</span></a><span class="k">class</span><span class="w"> </span><span class="nc">ModelType</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>
 </span><span id="ModelType-6"><a href="#ModelType-6"><span class="linenos"> 6</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="ModelType-7"><a href="#ModelType-7"><span class="linenos"> 7</span></a><span class="sd">    模型类型枚举类</span>
+</span><span id="ModelType-7"><a href="#ModelType-7"><span class="linenos"> 7</span></a><span class="sd">    支持的模型类型枚举类</span>
 </span><span id="ModelType-8"><a href="#ModelType-8"><span class="linenos"> 8</span></a>
-</span><span id="ModelType-9"><a href="#ModelType-9"><span class="linenos"> 9</span></a><span class="sd">    定义了系统支持的模型类型常量</span>
-</span><span id="ModelType-10"><a href="#ModelType-10"><span class="linenos">10</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="ModelType-11"><a href="#ModelType-11"><span class="linenos">11</span></a>
-</span><span id="ModelType-12"><a href="#ModelType-12"><span class="linenos">12</span></a>    <span class="n">OPENAI</span> <span class="o">=</span> <span class="s2">&quot;openai&quot;</span>
-</span><span id="ModelType-13"><a href="#ModelType-13"><span class="linenos">13</span></a>    <span class="n">YOLO</span> <span class="o">=</span> <span class="s2">&quot;yolo&quot;</span>
-</span><span id="ModelType-14"><a href="#ModelType-14"><span class="linenos">14</span></a>    <span class="n">GAN</span> <span class="o">=</span> <span class="s2">&quot;gan&quot;</span>
-</span><span id="ModelType-15"><a href="#ModelType-15"><span class="linenos">15</span></a>    <span class="n">GROUNDING_DINO</span> <span class="o">=</span> <span class="s2">&quot;grounding_dino&quot;</span>  <span class="c1"># support huggingface model now</span>
-</span><span id="ModelType-16"><a href="#ModelType-16"><span class="linenos">16</span></a>    <span class="n">LOCAL_OPENAI</span> <span class="o">=</span> <span class="s2">&quot;local_openai&quot;</span>
-</span><span id="ModelType-17"><a href="#ModelType-17"><span class="linenos">17</span></a>    <span class="c1"># LOCAL_MLLM = &quot;local_mllm&quot;</span>
+</span><span id="ModelType-9"><a href="#ModelType-9"><span class="linenos"> 9</span></a><span class="sd">    模型类型按照使用来源或推理框架分类，例如：</span>
+</span><span id="ModelType-10"><a href="#ModelType-10"><span class="linenos">10</span></a><span class="sd">    - OPENAI_* 表示基于 OpenAI 接口的模型</span>
+</span><span id="ModelType-11"><a href="#ModelType-11"><span class="linenos">11</span></a><span class="sd">    - LOCAL_* 表示本地加载的模型（Torch 或其他）</span>
+</span><span id="ModelType-12"><a href="#ModelType-12"><span class="linenos">12</span></a><span class="sd">    - HF_* 表示基于 HuggingFace Transformers/Diffusers 的模型</span>
+</span><span id="ModelType-13"><a href="#ModelType-13"><span class="linenos">13</span></a><span class="sd">    - ULTRA_* 表示基于 Ultralytics YOLO 系列</span>
+</span><span id="ModelType-14"><a href="#ModelType-14"><span class="linenos">14</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="ModelType-15"><a href="#ModelType-15"><span class="linenos">15</span></a>
+</span><span id="ModelType-16"><a href="#ModelType-16"><span class="linenos">16</span></a>    <span class="c1"># OpenAI 接口类模型</span>
+</span><span id="ModelType-17"><a href="#ModelType-17"><span class="linenos">17</span></a>    <span class="n">OPENAI_CHAT</span> <span class="o">=</span> <span class="s2">&quot;openai_chat&quot;</span>  <span class="c1"># gpt-3.5, gpt-4 等</span>
+</span><span id="ModelType-18"><a href="#ModelType-18"><span class="linenos">18</span></a>    <span class="n">OPENAI_EMBEDDING</span> <span class="o">=</span> <span class="s2">&quot;openai_embedding&quot;</span>
+</span><span id="ModelType-19"><a href="#ModelType-19"><span class="linenos">19</span></a>
+</span><span id="ModelType-20"><a href="#ModelType-20"><span class="linenos">20</span></a>    <span class="c1"># 本地兼容 OpenAI 接口的大模型（如 LM Studio, OpenRouter, Local LLM）</span>
+</span><span id="ModelType-21"><a href="#ModelType-21"><span class="linenos">21</span></a>    <span class="n">LOCAL_OPENAI</span> <span class="o">=</span> <span class="s2">&quot;local_openai&quot;</span>
+</span><span id="ModelType-22"><a href="#ModelType-22"><span class="linenos">22</span></a>
+</span><span id="ModelType-23"><a href="#ModelType-23"><span class="linenos">23</span></a>    <span class="c1"># HuggingFace 相关模型（支持transformers/diffusers）</span>
+</span><span id="ModelType-24"><a href="#ModelType-24"><span class="linenos">24</span></a>    <span class="n">HF_CLS</span> <span class="o">=</span> <span class="s2">&quot;hf_cls&quot;</span>  <span class="c1"># 文本分类模型</span>
+</span><span id="ModelType-25"><a href="#ModelType-25"><span class="linenos">25</span></a>    <span class="n">HF_QA</span> <span class="o">=</span> <span class="s2">&quot;hf_qa&quot;</span>  <span class="c1"># 问答</span>
+</span><span id="ModelType-26"><a href="#ModelType-26"><span class="linenos">26</span></a>    <span class="n">HF_SD</span> <span class="o">=</span> <span class="s2">&quot;hf_stable_diffusion&quot;</span>  <span class="c1"># 文生图</span>
+</span><span id="ModelType-27"><a href="#ModelType-27"><span class="linenos">27</span></a>    <span class="n">HF_GROUNDING_DINO</span> <span class="o">=</span> <span class="s2">&quot;hf_grounding_dino&quot;</span>
+</span><span id="ModelType-28"><a href="#ModelType-28"><span class="linenos">28</span></a>
+</span><span id="ModelType-29"><a href="#ModelType-29"><span class="linenos">29</span></a>    <span class="c1"># YOLO 系列模型</span>
+</span><span id="ModelType-30"><a href="#ModelType-30"><span class="linenos">30</span></a>    <span class="n">YOLO_ULTRA</span> <span class="o">=</span> <span class="s2">&quot;yolo_ultralytics&quot;</span>  <span class="c1"># Ultralytics YOLO</span>
+</span><span id="ModelType-31"><a href="#ModelType-31"><span class="linenos">31</span></a>    <span class="n">YOLO_PT</span> <span class="o">=</span> <span class="s2">&quot;yolo_torch&quot;</span>  <span class="c1"># 自定义 YOLO 模型（如 yolov5.pt）</span>
+</span><span id="ModelType-32"><a href="#ModelType-32"><span class="linenos">32</span></a>
+</span><span id="ModelType-33"><a href="#ModelType-33"><span class="linenos">33</span></a>    <span class="c1"># 自定义本地模型</span>
+</span><span id="ModelType-34"><a href="#ModelType-34"><span class="linenos">34</span></a>    <span class="n">TORCH_GAN</span> <span class="o">=</span> <span class="s2">&quot;torch_gan&quot;</span>
+</span><span id="ModelType-35"><a href="#ModelType-35"><span class="linenos">35</span></a>    <span class="n">TORCH_CLS</span> <span class="o">=</span> <span class="s2">&quot;torch_classification&quot;</span>
+</span><span id="ModelType-36"><a href="#ModelType-36"><span class="linenos">36</span></a>    <span class="n">TORCH_SEG</span> <span class="o">=</span> <span class="s2">&quot;torch_segmentation&quot;</span>
+</span><span id="ModelType-37"><a href="#ModelType-37"><span class="linenos">37</span></a>
+</span><span id="ModelType-38"><a href="#ModelType-38"><span class="linenos">38</span></a>    <span class="c1"># ONNX 推理模型（可选）</span>
+</span><span id="ModelType-39"><a href="#ModelType-39"><span class="linenos">39</span></a>    <span class="n">ONNX_MODEL</span> <span class="o">=</span> <span class="s2">&quot;onnx_model&quot;</span>
 </span></pre></div>
 
 
-            <div class="docstring"><p>模型类型枚举类</p>
+            <div class="docstring"><p>支持的模型类型枚举类</p>
 
-<p>定义了系统支持的模型类型常量</p>
+<p>模型类型按照使用来源或推理框架分类，例如：</p>
+
+<ul>
+<li>OPENAI_* 表示基于 OpenAI 接口的模型</li>
+<li>LOCAL_* 表示本地加载的模型（Torch 或其他）</li>
+<li>HF_* 表示基于 HuggingFace Transformers/Diffusers 的模型</li>
+<li>ULTRA_* 表示基于 Ultralytics YOLO 系列</li>
+</ul>
 </div>
 
 
-                            <div id="ModelType.OPENAI" class="classattr">
+                            <div id="ModelType.OPENAI_CHAT" class="classattr">
                                 <div class="attr variable">
-            <span class="name">OPENAI</span>        =
-<span class="default_value">&lt;<a href="#ModelType.OPENAI">ModelType.OPENAI</a>: &#39;openai&#39;&gt;</span>
+            <span class="name">OPENAI_CHAT</span>        =
+<span class="default_value">&lt;<a href="#ModelType.OPENAI_CHAT">ModelType.OPENAI_CHAT</a>: &#39;openai_chat&#39;&gt;</span>
 
         
     </div>
-    <a class="headerlink" href="#ModelType.OPENAI"></a>
+    <a class="headerlink" href="#ModelType.OPENAI_CHAT"></a>
     
     
 
                             </div>
-                            <div id="ModelType.YOLO" class="classattr">
+                            <div id="ModelType.OPENAI_EMBEDDING" class="classattr">
                                 <div class="attr variable">
-            <span class="name">YOLO</span>        =
-<span class="default_value">&lt;<a href="#ModelType.YOLO">ModelType.YOLO</a>: &#39;yolo&#39;&gt;</span>
+            <span class="name">OPENAI_EMBEDDING</span>        =
+<span class="default_value">&lt;<a href="#ModelType.OPENAI_EMBEDDING">ModelType.OPENAI_EMBEDDING</a>: &#39;openai_embedding&#39;&gt;</span>
 
         
     </div>
-    <a class="headerlink" href="#ModelType.YOLO"></a>
-    
-    
-
-                            </div>
-                            <div id="ModelType.GAN" class="classattr">
-                                <div class="attr variable">
-            <span class="name">GAN</span>        =
-<span class="default_value">&lt;<a href="#ModelType.GAN">ModelType.GAN</a>: &#39;gan&#39;&gt;</span>
-
-        
-    </div>
-    <a class="headerlink" href="#ModelType.GAN"></a>
-    
-    
-
-                            </div>
-                            <div id="ModelType.GROUNDING_DINO" class="classattr">
-                                <div class="attr variable">
-            <span class="name">GROUNDING_DINO</span>        =
-<span class="default_value">&lt;<a href="#ModelType.GROUNDING_DINO">ModelType.GROUNDING_DINO</a>: &#39;grounding_dino&#39;&gt;</span>
-
-        
-    </div>
-    <a class="headerlink" href="#ModelType.GROUNDING_DINO"></a>
+    <a class="headerlink" href="#ModelType.OPENAI_EMBEDDING"></a>
     
     
 
@@ -181,6 +232,126 @@
         
     </div>
     <a class="headerlink" href="#ModelType.LOCAL_OPENAI"></a>
+    
+    
+
+                            </div>
+                            <div id="ModelType.HF_CLS" class="classattr">
+                                <div class="attr variable">
+            <span class="name">HF_CLS</span>        =
+<span class="default_value">&lt;<a href="#ModelType.HF_CLS">ModelType.HF_CLS</a>: &#39;hf_cls&#39;&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#ModelType.HF_CLS"></a>
+    
+    
+
+                            </div>
+                            <div id="ModelType.HF_QA" class="classattr">
+                                <div class="attr variable">
+            <span class="name">HF_QA</span>        =
+<span class="default_value">&lt;<a href="#ModelType.HF_QA">ModelType.HF_QA</a>: &#39;hf_qa&#39;&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#ModelType.HF_QA"></a>
+    
+    
+
+                            </div>
+                            <div id="ModelType.HF_SD" class="classattr">
+                                <div class="attr variable">
+            <span class="name">HF_SD</span>        =
+<span class="default_value">&lt;<a href="#ModelType.HF_SD">ModelType.HF_SD</a>: &#39;hf_stable_diffusion&#39;&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#ModelType.HF_SD"></a>
+    
+    
+
+                            </div>
+                            <div id="ModelType.HF_GROUNDING_DINO" class="classattr">
+                                <div class="attr variable">
+            <span class="name">HF_GROUNDING_DINO</span>        =
+<span class="default_value">&lt;<a href="#ModelType.HF_GROUNDING_DINO">ModelType.HF_GROUNDING_DINO</a>: &#39;hf_grounding_dino&#39;&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#ModelType.HF_GROUNDING_DINO"></a>
+    
+    
+
+                            </div>
+                            <div id="ModelType.YOLO_ULTRA" class="classattr">
+                                <div class="attr variable">
+            <span class="name">YOLO_ULTRA</span>        =
+<span class="default_value">&lt;<a href="#ModelType.YOLO_ULTRA">ModelType.YOLO_ULTRA</a>: &#39;yolo_ultralytics&#39;&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#ModelType.YOLO_ULTRA"></a>
+    
+    
+
+                            </div>
+                            <div id="ModelType.YOLO_PT" class="classattr">
+                                <div class="attr variable">
+            <span class="name">YOLO_PT</span>        =
+<span class="default_value">&lt;<a href="#ModelType.YOLO_PT">ModelType.YOLO_PT</a>: &#39;yolo_torch&#39;&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#ModelType.YOLO_PT"></a>
+    
+    
+
+                            </div>
+                            <div id="ModelType.TORCH_GAN" class="classattr">
+                                <div class="attr variable">
+            <span class="name">TORCH_GAN</span>        =
+<span class="default_value">&lt;<a href="#ModelType.TORCH_GAN">ModelType.TORCH_GAN</a>: &#39;torch_gan&#39;&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#ModelType.TORCH_GAN"></a>
+    
+    
+
+                            </div>
+                            <div id="ModelType.TORCH_CLS" class="classattr">
+                                <div class="attr variable">
+            <span class="name">TORCH_CLS</span>        =
+<span class="default_value">&lt;<a href="#ModelType.TORCH_CLS">ModelType.TORCH_CLS</a>: &#39;torch_classification&#39;&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#ModelType.TORCH_CLS"></a>
+    
+    
+
+                            </div>
+                            <div id="ModelType.TORCH_SEG" class="classattr">
+                                <div class="attr variable">
+            <span class="name">TORCH_SEG</span>        =
+<span class="default_value">&lt;<a href="#ModelType.TORCH_SEG">ModelType.TORCH_SEG</a>: &#39;torch_segmentation&#39;&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#ModelType.TORCH_SEG"></a>
+    
+    
+
+                            </div>
+                            <div id="ModelType.ONNX_MODEL" class="classattr">
+                                <div class="attr variable">
+            <span class="name">ONNX_MODEL</span>        =
+<span class="default_value">&lt;<a href="#ModelType.ONNX_MODEL">ModelType.ONNX_MODEL</a>: &#39;onnx_model&#39;&gt;</span>
+
+        
+    </div>
+    <a class="headerlink" href="#ModelType.ONNX_MODEL"></a>
     
     
 

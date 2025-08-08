@@ -10,6 +10,7 @@ __TASKS__ = [
     # for model train and predict
     "train",
     "predict",
+    "yolo_detection",
     # for llm
     "chat",
     # for data augment

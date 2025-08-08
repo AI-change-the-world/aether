@@ -1,7 +1,7 @@
 from aether import init_db
 from aether.api.request import AetherRequest, RegisterModelRequest
 from aether.api.response import AetherResponse
-from aether.call.register_model_client import RegisterModelClient
+from aether.call import RegisterModelClient
 
 
 def test_register_model():
