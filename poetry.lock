@@ -1126,7 +1126,7 @@ version = "3.1.6"
 description = "A very fast and expressive template engine."
 optional = false
 python-versions = ">=3.7"
-groups = ["main"]
+groups = ["main", "dev"]
 files = [
     {file = "jinja2-3.1.6-py3-none-any.whl", hash = "sha256:85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67"},
     {file = "jinja2-3.1.6.tar.gz", hash = "sha256:0137fb05990d35f1275a587e9aee6d56da821fc83491a0fb838183be43f66d6d"},
@@ -1340,7 +1340,7 @@ version = "3.0.2"
 description = "Safely add untrusted strings to HTML/XML markup."
 optional = false
 python-versions = ">=3.9"
-groups = ["main"]
+groups = ["main", "dev"]
 files = [
     {file = "MarkupSafe-3.0.2-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:7e94c425039cde14257288fd61dcfb01963e658efbc0ff54f5306b06054700f8"},
     {file = "MarkupSafe-3.0.2-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:9e2d922824181480953426608b81967de705c3cef4d1af983af849d7bd619158"},
@@ -2140,6 +2140,23 @@ spss = ["pyreadstat (>=1.2.0)"]
 sql-other = ["SQLAlchemy (>=2.0.0)", "adbc-driver-postgresql (>=0.8.0)", "adbc-driver-sqlite (>=0.8.0)"]
 test = ["hypothesis (>=6.46.1)", "pytest (>=7.3.2)", "pytest-xdist (>=2.2.0)"]
 xml = ["lxml (>=4.9.2)"]
+
+[[package]]
+name = "pdoc"
+version = "15.0.4"
+description = "API Documentation for Python Projects"
+optional = false
+python-versions = ">=3.9"
+groups = ["dev"]
+files = [
+    {file = "pdoc-15.0.4-py3-none-any.whl", hash = "sha256:f9028e85e7bb8475b054e69bde1f6d26fc4693d25d9fa1b1ce9009bec7f7a5c4"},
+    {file = "pdoc-15.0.4.tar.gz", hash = "sha256:cf9680f10f5b4863381f44ef084b1903f8f356acb0d4cc6b64576ba9fb712c82"},
+]
+
+[package.dependencies]
+Jinja2 = ">=2.11.0"
+MarkupSafe = ">=1.1.1"
+pygments = ">=2.12.0"
 
 [[package]]
 name = "peft"
@@ -3972,4 +3989,4 @@ propcache = ">=0.2.1"
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10,<4.0"
-content-hash = "5fb87912c4cbe274c2876fc930570851ef9f1560f4fcfa5e2afafcad6384dc60"
+content-hash = "8fe4dbcc082cc65a5be0636b9c193d0889b15005170e3efab8643890a24f0390"

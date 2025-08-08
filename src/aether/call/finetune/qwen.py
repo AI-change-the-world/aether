@@ -5,11 +5,10 @@ import torch
 from datasets import Dataset
 from peft import get_peft_model
 from sqlalchemy.orm import Session
-from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer
+from transformers import AutoModelForCausalLM, AutoTokenizer, Trainer,DataCollatorForSeq2Seq
 
 from aether.call.finetune import __IS_PEFT_AVAILABLE__
 from aether.call.finetune.callback import (
-    DataCollatorForSeq2Seq,
     TrainingMonitorCallback,
     TrainingStatus,
 )

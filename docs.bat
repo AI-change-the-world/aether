@@ -1,0 +1,1 @@
+pdoc src/aether -o docs
