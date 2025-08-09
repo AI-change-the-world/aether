@@ -9,6 +9,8 @@ TYPE_MAP = {
     "list": list,
     "dict": dict,
     "object": dict,
+    "string": str,
+    "boolean": bool,
 }
 
 REVERSE_TYPE_MAP = {v: k for k, v in TYPE_MAP.items()}

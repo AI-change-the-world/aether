@@ -8,6 +8,7 @@ from aether.call.config import OpenAIChatConfig
 from aether.common.logger import logger
 from aether.models.task.task_crud import AetherTaskCRUD
 from aether.models.tool_model.tool_model_crud import AetherToolModelCRUD
+from aether.utils.object_match import validate
 
 
 class OpenAIClient(BaseClient):
@@ -71,6 +72,12 @@ class OpenAIClient(BaseClient):
                 base_url=config.base_url,
             )
             model_name = config.model_name
+
+            if tool_model.req is not None and req.extra is not None:
+                if not validate(req.extra, tool_model.req):
+                    raise Exception(
+                        f"[{__task_name__}] extra not match req\nExpected: {tool_model.req}\nGot: {req.extra}"
+                    )
 
             # 构造对话历史并调用模型
             history = getattr(req.extra, "history", []) if req.extra else []

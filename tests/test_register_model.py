@@ -52,4 +52,8 @@ def test_register_model_async():
     f_client = FetchResultClient()
     fr = AetherRequest(task="fetch_result", input=Input(data=task_id))
     res = f_client.call(fr)
-    assert isinstance(res, AetherResponse) and res.success and res.output["output"]["status"] == 1
+    assert (
+        isinstance(res, AetherResponse)
+        and res.success
+        and res.output["output"]["status"] == 1
+    )

@@ -1,0 +1,43 @@
+{
+    "req": {
+        "conf_thres": {
+            "type": "float",
+            "default": 0.25
+        }
+    },
+    "resp": {
+        "image": {
+            "type": "str",
+            "default": "*.png"
+        },
+        "bbox": {
+            "type": "list",
+            "default": "...",
+            "items": {
+                "type": "object",
+                "fields": {
+                    "x": {
+                        "type": "int",
+                        "default": "..."
+                    },
+                    "y": {
+                        "type": "int",
+                        "default": "..."
+                    },
+                    "w": {
+                        "type": "int",
+                        "default": "..."
+                    },
+                    "h": {
+                        "type": "int",
+                        "default": "..."
+                    },
+                    "label": {
+                        "type": "str",
+                        "default": "..."
+                    }
+                }
+            }
+        }
+    }
+}

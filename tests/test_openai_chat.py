@@ -9,7 +9,13 @@ def test_chat_openai():
     init_db()
     client = OpenAIClient(auto_dispose=True)
     req = AetherRequest(
-        task="chat", model_id=1, input=Input(data="repeat what i said\nhello world")
+        task="chat",
+        model_id=1,
+        input=Input(data="repeat what i said\nhello world"),
+        extra={
+            "temperature": 0.5,
+            "history": [{"role": "system", "content": "you are a helpful assistant"}],
+        },
     )
     res = client.call(req)
     assert (

@@ -10,6 +10,7 @@ from aether.call.config import YOLOConfig
 from aether.common.logger import logger
 from aether.models.task.task_crud import AetherTaskCRUD
 from aether.models.tool_model.tool_model_crud import AetherToolModelCRUD
+from aether.utils.object_match import validate
 
 
 class YoloClient(BaseClient):
@@ -67,6 +68,13 @@ class YoloClient(BaseClient):
             # TODO get data from input
             # default local path
             image = cv2.imread(img)
+            thres = 0.25
+            if req.extra and tool_model.req is not None:
+                if not validate(req.extra, tool_model.req):
+                    raise Exception(
+                        f"[{__task_name__}] Input extra is not valid\nExpected: {tool_model.req}\nGot: {req.extra}"
+                    )
+
             thres = req.extra.get("conf_thres", 0.25)
             model, result = yolo_detect(config.model_path, image, thres)
             if result is None:
@@ -74,7 +82,12 @@ class YoloClient(BaseClient):
 
             self.model = model
             result["task_id"] = aether_task.aether_task_id
-            # TODO validate output
+            result["image"] = img
+            if tool_model.resp is not None:
+                if not validate(result, tool_model.resp):
+                    raise Exception(
+                        f"[{__task_name__}] result is not valid\nExpected: {tool_model.resp}\nActual: {result}"
+                    )
             return result
 
         except Exception as e:
