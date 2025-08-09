@@ -6,7 +6,7 @@ import torch
 
 from aether.api.generic import T
 from aether.api.request import AetherRequest
-from aether.api.response import AetherResponse
+from aether.api.response import AetherResponse, with_timing_response
 from aether.call.config import BaseModelConfig
 from aether.db.basic import get_session
 
@@ -22,6 +22,10 @@ class BaseClient(ABC):
         self.session = get_session()
         self.model = None
         self.auto_dispose = auto_dispose
+
+    @with_timing_response
+    def threaded_task_wrapper(self, task_id: int) -> dict:
+        return {"task_id": task_id}
 
     def dispose(self):
         if self.model is not None and self.auto_dispose:

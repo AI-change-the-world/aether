@@ -181,6 +181,7 @@ sk.txt
 
 *.png 
 *.jpg
+!tests/2.jpg
 
 *.mov
 *.mp4
@@ -192,3 +193,4 @@ logs/
 .vscode
 
 *.db
+grounding-dino-base/
