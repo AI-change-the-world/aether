@@ -140,11 +140,11 @@ def save_grounding_dino_results_cv2(
     return img
 
 
-model_id = "IDEA-Research/grounding-dino-base"
+tool_id = "IDEA-Research/grounding-dino-base"
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
-processor = AutoProcessor.from_pretrained(model_id)
-model = AutoModelForZeroShotObjectDetection.from_pretrained(model_id).to(device)
+processor = AutoProcessor.from_pretrained(tool_id)
+model = AutoModelForZeroShotObjectDetection.from_pretrained(tool_id).to(device)
 
 image_path = "1.webp"
 image = Image.open(image_path)

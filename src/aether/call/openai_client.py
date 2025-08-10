@@ -7,7 +7,7 @@ from aether.call.base import BaseClient
 from aether.call.config import OpenAIChatConfig
 from aether.common.logger import logger
 from aether.models.task.task_crud import AetherTaskCRUD
-from aether.models.tool_model.tool_model_crud import AetherToolModelCRUD
+from aether.models.tool.tool_crud import AetherToolCRUD
 from aether.utils.object_match import validate
 
 
@@ -16,6 +16,8 @@ class OpenAIClient(BaseClient):
     专门处理 OpenAI 模型的客户端，实现了 chat 任务。
     A client specialized in handling OpenAI models and the chat task.
     """
+
+    __task_name__ = "call_openai_model"
 
     def __init__(self, auto_dispose: bool = False):
         super().__init__(auto_dispose=auto_dispose)
@@ -35,21 +37,27 @@ class OpenAIClient(BaseClient):
                 - done: 任务是否完成的标志
                 - task_id: 任务ID
         """
-        __task_name__ = "call_openai_model"
+
         assert req.task == "chat", "task must be chat"
 
         # 创建任务记录
-        task_json = {
-            "task_type": __task_name__,
-            "status": 0,
-            "req": req.model_dump_json(),
-        }
-        aether_task = AetherTaskCRUD.create(self.session, task_json)
+        # task_json = {
+        #     "task_type": self.__task_name__,
+        #     "status": 0,
+        #     "req": req.model_dump_json(),
+        # }
+        aether_task = self.create_task(req)
+
+        if aether_task is None:
+            logger.error(f"[{self.__task_name__}] create task failed")
+            raise ValueError("create task failed")
+
+        task_json = aether_task.to_dict()
 
         # 检查模型ID是否有效
-        if req.model_id == 0:
-            logger.error(f"[{__task_name__}] model_id is 0")
-            raise ValueError("model_id is 0")
+        if req.tool_id == 0:
+            logger.error(f"[{self.__task_name__}] tool_id is 0")
+            raise ValueError("tool_id is 0")
 
         # 如果不自动释放资源，则需要保存模型配置（TODO）
         if not self.auto_dispose:
@@ -60,13 +68,13 @@ class OpenAIClient(BaseClient):
             from openai import OpenAI
 
             # 获取工具模型配置
-            tool_model = AetherToolModelCRUD.get_by_id(self.session, req.model_id)
+            tool_model = AetherToolCRUD.get_by_id(self.session, req.tool_id)
             if tool_model is None:
-                logger.error(f"[{__task_name__}] tool model not found")
+                logger.error(f"[{self.__task_name__}] tool model not found")
                 raise ValueError("tool model not found")
 
-            tool_model_config = json.loads(tool_model.tool_model_config)
-            config = OpenAIChatConfig(**tool_model_config)
+            tool_config = json.loads(tool_model.tool_config)
+            config = OpenAIChatConfig(**tool_config)
             self.model = OpenAI(
                 api_key=config.api_key,
                 base_url=config.base_url,
@@ -76,7 +84,7 @@ class OpenAIClient(BaseClient):
             if tool_model.req is not None and req.extra is not None:
                 if not validate(req.extra, tool_model.req):
                     raise Exception(
-                        f"[{__task_name__}] extra not match req\nExpected: {tool_model.req}\nGot: {req.extra}"
+                        f"[{self.__task_name__}] extra not match req\nExpected: {tool_model.req}\nGot: {req.extra}"
                     )
 
             # 构造对话历史并调用模型
@@ -100,13 +108,13 @@ class OpenAIClient(BaseClient):
             }
         except json.JSONDecodeError:
             # 处理模型配置JSON解析错误
-            logger.error(f"[{__task_name__}] tool model config is not valid json")
+            logger.error(f"[{self.__task_name__}] tool model config is not valid json")
             task_json["status"] = 4
             AetherTaskCRUD.update(self.session, aether_task.aether_task_id, task_json)
             raise ValueError("tool model config is not valid json")
         except Exception as e:
             # 处理其他异常情况
-            logger.error(f"[{__task_name__}] error: {e}")
+            logger.error(f"[{self.__task_name__}] error: {e}")
             task_json["status"] = 4
             AetherTaskCRUD.update(self.session, aether_task.aether_task_id, task_json)
             raise e

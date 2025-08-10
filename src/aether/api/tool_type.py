@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class ModelType(str, Enum):
+class ToolType(str, Enum):
     """
     支持的模型类型枚举类
 

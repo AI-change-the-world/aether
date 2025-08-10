@@ -8,12 +8,12 @@ import torch
 from aether.api.generic import T
 from aether.api.request import AetherRequest, RegisterModelRequest
 from aether.api.response import AetherResponse, with_timing_response
-from aether.call.config import BaseModelConfig
+from aether.call.config import BaseToolConfig
 from aether.common.logger import logger
 from aether.db.basic import get_session
 from aether.models.task.task import AetherTask
 from aether.models.task.task_crud import AetherTaskCRUD
-from aether.models.tool_model.tool_model_crud import AetherToolModelCRUD
+from aether.models.tool.tool_crud import AetherToolCRUD
 from aether.utils.object_match import is_object_match
 
 
@@ -82,8 +82,8 @@ class Client(__BasicClient):
     ) -> dict:
         __task_name__ = "register_model"
         assert req.task == "register_model", "task must be register_model"
-        if req.model_id != 0:
-            logger.warning(f"[{__task_name__}] model_id is not 0, will be ignored")
+        if req.tool_id != 0:
+            logger.warning(f"[{__task_name__}] tool_id is not 0, will be ignored")
         logger.info(f"[{__task_name__}] create register model task ...")
         aether_task, task_json = self.__create_task(__task_name__, req)
         if aether_task is None:
@@ -101,16 +101,16 @@ class Client(__BasicClient):
             "api_key": req.extra.api_key,
             "base_url": req.extra.base_url,
             "model_name": req.extra.model_name,
-            "model_type": req.extra.model_type,
+            "tool_type": req.extra.tool_type,
             "model_path": req.extra.model_path,
         }
         aether_tool_json = {
-            "tool_model_name": req.extra.model_name,
-            "tool_model_config": json.dumps(model_config),
+            "tool_name": req.extra.model_name,
+            "tool_config": json.dumps(model_config),
             "req": json.dumps(req.extra.request_definition),
             "resp": json.dumps(req.extra.response_definition),
         }
-        aether_tool_model = AetherToolModelCRUD.create(self.session, aether_tool_json)
+        aether_tool_model = AetherToolCRUD.create(self.session, aether_tool_json)
         if aether_tool_model is None:
             logger.error(f"[{__task_name__}] create tool model failed")
             task_json["status"] = 4
@@ -128,23 +128,23 @@ class Client(__BasicClient):
         __task_name__ = "call_openai_model"
         assert req.task == "chat", "task must be chat"
         aether_task, task_json = self.__create_task(__task_name__, req)
-        if req.model_id == 0:
-            logger.error(f"[{__task_name__}] model_id is 0")
-            raise ValueError("model_id is 0")
+        if req.tool_id == 0:
+            logger.error(f"[{__task_name__}] tool_id is 0")
+            raise ValueError("tool_id is 0")
         try:
             from openai import OpenAI
         except ImportError:
             logger.error(f"[{__task_name__}] openai not installed")
             raise ImportError("openai not installed")
-        tool_model = AetherToolModelCRUD.get_by_id(self.session, req.model_id)
+        tool_model = AetherToolCRUD.get_by_id(self.session, req.tool_id)
         if tool_model is None:
             logger.error(f"[{__task_name__}] tool model not found")
             raise ValueError("tool model not found")
         try:
-            tool_model_config = json.loads(tool_model.tool_model_config)
+            tool_config = json.loads(tool_model.tool_config)
             self.model = OpenAI(
-                api_key=tool_model_config["api_key"],
-                base_url=tool_model_config["base_url"],
+                api_key=tool_config["api_key"],
+                base_url=tool_config["base_url"],
             )
             model_name = tool_model.tool_model_name
             history = []
@@ -185,5 +185,5 @@ class Client(__BasicClient):
         return super().re_activate()
 
     @staticmethod
-    def from_config(config: BaseModelConfig, auto_dispose: bool = False):
+    def from_config(config: BaseToolConfig, auto_dispose: bool = False):
         pass

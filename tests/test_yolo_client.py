@@ -10,7 +10,7 @@ def test_yolo_detection():
     client = YoloClient(auto_dispose=True)
     req = AetherRequest(
         task="yolo_detection",
-        model_id=2,
+        tool_id=2,
         input=Input(data=r"tests\1.webp"),
         extra={"conf_thres": 0.5},
     )

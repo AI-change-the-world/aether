@@ -15,7 +15,7 @@ def test_register_model():
     client = RegisterModelClient()
     r: RegisterModelRequest = RegisterModelRequest(
         model_name="test_model",
-        model_type="local_openai",
+        tool_type="local_openai",
         model_path="",
         base_url="localhost:9997",
         api_key="sk-",
@@ -32,7 +32,7 @@ def test_register_model_async():
     client = RegisterModelClient()
     r: RegisterModelRequest = RegisterModelRequest(
         model_name="test_model",
-        model_type="local_openai",
+        tool_type="local_openai",
         model_path="",
         base_url="localhost:9997",
         api_key="sk-",

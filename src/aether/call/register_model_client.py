@@ -6,7 +6,7 @@ from aether.call.base import BaseClient
 from aether.call.threaded_call import GLOBAL_THREAD_TASK_MANAGER
 from aether.common.logger import logger
 from aether.models.task.task_crud import AetherTaskCRUD
-from aether.models.tool_model.tool_model_crud import AetherToolModelCRUD
+from aether.models.tool.tool_crud import AetherToolCRUD
 from aether.utils.object_match import is_object_match
 
 
@@ -56,17 +56,17 @@ class RegisterModelClient(BaseClient):
             "api_key": req.extra.api_key,
             "base_url": req.extra.base_url,
             "model_name": req.extra.model_name,
-            "model_type": req.extra.model_type,
+            "tool_type": req.extra.tool_type,
             "model_path": req.extra.model_path,
         }
         aether_tool_json = {
-            "tool_model_name": req.extra.model_name,
-            "tool_model_config": json.dumps(model_config),
+            "tool_name": req.extra.model_name,
+            "tool_config": json.dumps(model_config),
             "req": json.dumps(req.extra.request_definition),
             "resp": json.dumps(req.extra.response_definition),
         }
         # 创建工具模型记录
-        aether_tool_model = AetherToolModelCRUD.create(self.session, aether_tool_json)
+        aether_tool_model = AetherToolCRUD.create(self.session, aether_tool_json)
 
         # 检查工具模型是否创建成功
         if aether_tool_model is None:
@@ -84,15 +84,17 @@ class RegisterModelClient(BaseClient):
     def call(self, req, **kwargs):
 
         assert req.task == "register_model", "task must be register_model"
-        if req.model_id != 0:
-            logger.warning(f"[{self.__task_name__}] model_id is not 0, will be ignored")
+        if req.tool_id != 0:
+            logger.warning(f"[{self.__task_name__}] tool_id is not 0, will be ignored")
         logger.info(f"[{self.__task_name__}] create register model task ...")
-        task_json = {
-            "task_type": self.__task_name__,
-            "status": 0,
-            "req": req.model_dump_json(),
-        }
-        aether_task = AetherTaskCRUD.create(self.session, task_json)
+        # task_json = {
+        #     "task_type": self.__task_name__,
+        #     "status": 0,
+        #     "req": req.model_dump_json(),
+        # }
+        # aether_task = AetherTaskCRUD.create(self.session, task_json)
+        aether_task = self.create_task(req)
+        task_json = aether_task.to_dict()
         if req.meta.execution == Execution.SYNC:
             return self.__call(
                 req,

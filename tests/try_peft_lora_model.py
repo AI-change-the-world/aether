@@ -14,7 +14,7 @@ model = AutoModelForCausalLM.from_pretrained(
 ).eval()
 
 # 加载lora权重
-model = PeftModel.from_pretrained(model, model_id=lora_path)
+model = PeftModel.from_pretrained(model, tool_id=lora_path)
 
 prompt = "你是谁？"
 inputs = tokenizer.apply_chat_template(

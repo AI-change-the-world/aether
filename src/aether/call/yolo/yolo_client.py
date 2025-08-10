@@ -9,7 +9,7 @@ from aether.call.base import BaseClient
 from aether.call.config import YOLOConfig
 from aether.common.logger import logger
 from aether.models.task.task_crud import AetherTaskCRUD
-from aether.models.tool_model.tool_model_crud import AetherToolModelCRUD
+from aether.models.tool.tool_crud import AetherToolCRUD
 from aether.utils.object_match import validate
 
 
@@ -47,16 +47,16 @@ class YoloClient(BaseClient):
             # 创建Aether任务记录
             aether_task = AetherTaskCRUD.create(self.session, task_json)
 
-            if req.model_id == 0:
-                logger.error(f"[{__task_name__}] model_id is 0")
-                raise ValueError("model_id is 0")
+            if req.tool_id == 0:
+                logger.error(f"[{__task_name__}] tool_id is 0")
+                raise ValueError("tool_id is 0")
 
-            tool_model = AetherToolModelCRUD.get_by_id(self.session, req.model_id)
+            tool_model = AetherToolCRUD.get_by_id(self.session, req.tool_id)
             if tool_model is None:
                 logger.error(f"[{__task_name__}] tool model not found")
                 raise ValueError("tool model not found")
-            tool_model_config = json.loads(tool_model.tool_model_config)
-            config = YOLOConfig(**tool_model_config)
+            tool_config = json.loads(tool_model.tool_config)
+            config = YOLOConfig(**tool_config)
             if req.input is None:
                 logger.error(f"[{__task_name__}] input is None")
                 raise ValueError("input is None")

@@ -64,7 +64,7 @@
                                 <a class="variable" href="#RegisterModelRequest.model_name">model_name</a>
                         </li>
                         <li>
-                                <a class="variable" href="#RegisterModelRequest.model_type">model_type</a>
+                                <a class="variable" href="#RegisterModelRequest.tool_type">tool_type</a>
                         </li>
                         <li>
                                 <a class="variable" href="#RegisterModelRequest.model_path">model_path</a>
@@ -94,7 +94,7 @@
                                 <a class="variable" href="#AetherRequest.task">task</a>
                         </li>
                         <li>
-                                <a class="variable" href="#AetherRequest.model_id">model_id</a>
+                                <a class="variable" href="#AetherRequest.tool_id">tool_id</a>
                         </li>
                         <li>
                                 <a class="variable" href="#AetherRequest.input">input</a>
@@ -157,7 +157,7 @@
 </span><span id="L-23"><a href="#L-23"><span class="linenos"> 23</span></a>    <span class="s2">&quot;register_model&quot;</span><span class="p">,</span>
 </span><span id="L-24"><a href="#L-24"><span class="linenos"> 24</span></a>    <span class="c1"># fetch result ; if Execution.ASYNC, use {&quot;task_id&quot;: xxx} to fetch result</span>
 </span><span id="L-25"><a href="#L-25"><span class="linenos"> 25</span></a>    <span class="s2">&quot;fetch_result&quot;</span><span class="p">,</span>
-</span><span id="L-26"><a href="#L-26"><span class="linenos"> 26</span></a>    <span class="c1"># get model inormation by {&quot;model_id&quot;: xxx}</span>
+</span><span id="L-26"><a href="#L-26"><span class="linenos"> 26</span></a>    <span class="c1"># get model inormation by {&quot;tool_id&quot;: xxx}</span>
 </span><span id="L-27"><a href="#L-27"><span class="linenos"> 27</span></a>    <span class="s2">&quot;fetch_model_info&quot;</span><span class="p">,</span>
 </span><span id="L-28"><a href="#L-28"><span class="linenos"> 28</span></a><span class="p">]</span>
 </span><span id="L-29"><a href="#L-29"><span class="linenos"> 29</span></a>
@@ -189,7 +189,7 @@
 </span><span id="L-55"><a href="#L-55"><span class="linenos"> 55</span></a>
 </span><span id="L-56"><a href="#L-56"><span class="linenos"> 56</span></a><span class="sd">    Attributes:</span>
 </span><span id="L-57"><a href="#L-57"><span class="linenos"> 57</span></a><span class="sd">        model_name (str): 模型名称，用于唯一标识一个模型</span>
-</span><span id="L-58"><a href="#L-58"><span class="linenos"> 58</span></a><span class="sd">        model_type (str): 模型类型，表示模型的分类或用途</span>
+</span><span id="L-58"><a href="#L-58"><span class="linenos"> 58</span></a><span class="sd">        tool_type (str): 模型类型，表示模型的分类或用途</span>
 </span><span id="L-59"><a href="#L-59"><span class="linenos"> 59</span></a><span class="sd">        model_path (Optional[str]): 模型文件路径，可选参数，后续将支持s3路径，目前仅支持本地路径</span>
 </span><span id="L-60"><a href="#L-60"><span class="linenos"> 60</span></a><span class="sd">        base_url (Optional[str]): 模型服务的基础URL，可选参数</span>
 </span><span id="L-61"><a href="#L-61"><span class="linenos"> 61</span></a><span class="sd">        api_key (Optional[str]): 访问模型服务所需的API密钥，可选参数</span>
@@ -235,7 +235,7 @@
 </span><span id="L-101"><a href="#L-101"><span class="linenos">101</span></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="L-102"><a href="#L-102"><span class="linenos">102</span></a>
 </span><span id="L-103"><a href="#L-103"><span class="linenos">103</span></a>    <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span>
-</span><span id="L-104"><a href="#L-104"><span class="linenos">104</span></a>    <span class="n">model_type</span><span class="p">:</span> <span class="nb">str</span>
+</span><span id="L-104"><a href="#L-104"><span class="linenos">104</span></a>    <span class="n">tool_type</span><span class="p">:</span> <span class="nb">str</span>
 </span><span id="L-105"><a href="#L-105"><span class="linenos">105</span></a>    <span class="c1"># 后续支持s3路径，暂时只支持本地路径</span>
 </span><span id="L-106"><a href="#L-106"><span class="linenos">106</span></a>    <span class="n">model_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
 </span><span id="L-107"><a href="#L-107"><span class="linenos">107</span></a>    <span class="n">base_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
@@ -250,14 +250,14 @@
 </span><span id="L-116"><a href="#L-116"><span class="linenos">116</span></a>
 </span><span id="L-117"><a href="#L-117"><span class="linenos">117</span></a><span class="sd">    Attributes:</span>
 </span><span id="L-118"><a href="#L-118"><span class="linenos">118</span></a><span class="sd">        task (str): 任务描述字符串</span>
-</span><span id="L-119"><a href="#L-119"><span class="linenos">119</span></a><span class="sd">        model_id (int): 模型ID，使用Field定义别名</span>
+</span><span id="L-119"><a href="#L-119"><span class="linenos">119</span></a><span class="sd">        tool_id (int): 模型ID，使用Field定义别名</span>
 </span><span id="L-120"><a href="#L-120"><span class="linenos">120</span></a><span class="sd">        input (Input): 输入数据对象, 默认为空</span>
 </span><span id="L-121"><a href="#L-121"><span class="linenos">121</span></a><span class="sd">        meta (RequestMeta): 请求元数据对象</span>
 </span><span id="L-122"><a href="#L-122"><span class="linenos">122</span></a><span class="sd">        extra (Optional[T]): 可选的额外数据，类型为泛型T，默认为None</span>
 </span><span id="L-123"><a href="#L-123"><span class="linenos">123</span></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="L-124"><a href="#L-124"><span class="linenos">124</span></a>
 </span><span id="L-125"><a href="#L-125"><span class="linenos">125</span></a>    <span class="n">task</span><span class="p">:</span> <span class="nb">str</span>
-</span><span id="L-126"><a href="#L-126"><span class="linenos">126</span></a>    <span class="n">model_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;model_id&quot;</span><span class="p">)</span>
+</span><span id="L-126"><a href="#L-126"><span class="linenos">126</span></a>    <span class="n">tool_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;tool_id&quot;</span><span class="p">)</span>
 </span><span id="L-127"><a href="#L-127"><span class="linenos">127</span></a>    <span class="nb">input</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Input</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;input&quot;</span><span class="p">)</span>
 </span><span id="L-128"><a href="#L-128"><span class="linenos">128</span></a>    <span class="n">meta</span><span class="p">:</span> <span class="n">RequestMeta</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">RequestMeta</span><span class="p">(),</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;meta&quot;</span><span class="p">)</span>
 </span><span id="L-129"><a href="#L-129"><span class="linenos">129</span></a>    <span class="n">extra</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -409,7 +409,7 @@
 </span><span id="RegisterModelRequest-56"><a href="#RegisterModelRequest-56"><span class="linenos"> 56</span></a>
 </span><span id="RegisterModelRequest-57"><a href="#RegisterModelRequest-57"><span class="linenos"> 57</span></a><span class="sd">    Attributes:</span>
 </span><span id="RegisterModelRequest-58"><a href="#RegisterModelRequest-58"><span class="linenos"> 58</span></a><span class="sd">        model_name (str): 模型名称，用于唯一标识一个模型</span>
-</span><span id="RegisterModelRequest-59"><a href="#RegisterModelRequest-59"><span class="linenos"> 59</span></a><span class="sd">        model_type (str): 模型类型，表示模型的分类或用途</span>
+</span><span id="RegisterModelRequest-59"><a href="#RegisterModelRequest-59"><span class="linenos"> 59</span></a><span class="sd">        tool_type (str): 模型类型，表示模型的分类或用途</span>
 </span><span id="RegisterModelRequest-60"><a href="#RegisterModelRequest-60"><span class="linenos"> 60</span></a><span class="sd">        model_path (Optional[str]): 模型文件路径，可选参数，后续将支持s3路径，目前仅支持本地路径</span>
 </span><span id="RegisterModelRequest-61"><a href="#RegisterModelRequest-61"><span class="linenos"> 61</span></a><span class="sd">        base_url (Optional[str]): 模型服务的基础URL，可选参数</span>
 </span><span id="RegisterModelRequest-62"><a href="#RegisterModelRequest-62"><span class="linenos"> 62</span></a><span class="sd">        api_key (Optional[str]): 访问模型服务所需的API密钥，可选参数</span>
@@ -455,7 +455,7 @@
 </span><span id="RegisterModelRequest-102"><a href="#RegisterModelRequest-102"><span class="linenos">102</span></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="RegisterModelRequest-103"><a href="#RegisterModelRequest-103"><span class="linenos">103</span></a>
 </span><span id="RegisterModelRequest-104"><a href="#RegisterModelRequest-104"><span class="linenos">104</span></a>    <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span>
-</span><span id="RegisterModelRequest-105"><a href="#RegisterModelRequest-105"><span class="linenos">105</span></a>    <span class="n">model_type</span><span class="p">:</span> <span class="nb">str</span>
+</span><span id="RegisterModelRequest-105"><a href="#RegisterModelRequest-105"><span class="linenos">105</span></a>    <span class="n">tool_type</span><span class="p">:</span> <span class="nb">str</span>
 </span><span id="RegisterModelRequest-106"><a href="#RegisterModelRequest-106"><span class="linenos">106</span></a>    <span class="c1"># 后续支持s3路径，暂时只支持本地路径</span>
 </span><span id="RegisterModelRequest-107"><a href="#RegisterModelRequest-107"><span class="linenos">107</span></a>    <span class="n">model_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
 </span><span id="RegisterModelRequest-108"><a href="#RegisterModelRequest-108"><span class="linenos">108</span></a>    <span class="n">base_url</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
@@ -471,7 +471,7 @@
 
 <p>Attributes:
     model_name (str): 模型名称，用于唯一标识一个模型
-    model_type (str): 模型类型，表示模型的分类或用途
+    tool_type (str): 模型类型，表示模型的分类或用途
     model_path (Optional[str]): 模型文件路径，可选参数，后续将支持s3路径，目前仅支持本地路径
     base_url (Optional[str]): 模型服务的基础URL，可选参数
     api_key (Optional[str]): 访问模型服务所需的API密钥，可选参数
@@ -528,13 +528,13 @@
     
 
                             </div>
-                            <div id="RegisterModelRequest.model_type" class="classattr">
+                            <div id="RegisterModelRequest.tool_type" class="classattr">
                                 <div class="attr variable">
-            <span class="name">model_type</span><span class="annotation">: str</span>
+            <span class="name">tool_type</span><span class="annotation">: str</span>
 
         
     </div>
-    <a class="headerlink" href="#RegisterModelRequest.model_type"></a>
+    <a class="headerlink" href="#RegisterModelRequest.tool_type"></a>
     
     
 
@@ -626,14 +626,14 @@
 </span><span id="AetherRequest-117"><a href="#AetherRequest-117"><span class="linenos">117</span></a>
 </span><span id="AetherRequest-118"><a href="#AetherRequest-118"><span class="linenos">118</span></a><span class="sd">    Attributes:</span>
 </span><span id="AetherRequest-119"><a href="#AetherRequest-119"><span class="linenos">119</span></a><span class="sd">        task (str): 任务描述字符串</span>
-</span><span id="AetherRequest-120"><a href="#AetherRequest-120"><span class="linenos">120</span></a><span class="sd">        model_id (int): 模型ID，使用Field定义别名</span>
+</span><span id="AetherRequest-120"><a href="#AetherRequest-120"><span class="linenos">120</span></a><span class="sd">        tool_id (int): 模型ID，使用Field定义别名</span>
 </span><span id="AetherRequest-121"><a href="#AetherRequest-121"><span class="linenos">121</span></a><span class="sd">        input (Input): 输入数据对象, 默认为空</span>
 </span><span id="AetherRequest-122"><a href="#AetherRequest-122"><span class="linenos">122</span></a><span class="sd">        meta (RequestMeta): 请求元数据对象</span>
 </span><span id="AetherRequest-123"><a href="#AetherRequest-123"><span class="linenos">123</span></a><span class="sd">        extra (Optional[T]): 可选的额外数据，类型为泛型T，默认为None</span>
 </span><span id="AetherRequest-124"><a href="#AetherRequest-124"><span class="linenos">124</span></a><span class="sd">    &quot;&quot;&quot;</span>
 </span><span id="AetherRequest-125"><a href="#AetherRequest-125"><span class="linenos">125</span></a>
 </span><span id="AetherRequest-126"><a href="#AetherRequest-126"><span class="linenos">126</span></a>    <span class="n">task</span><span class="p">:</span> <span class="nb">str</span>
-</span><span id="AetherRequest-127"><a href="#AetherRequest-127"><span class="linenos">127</span></a>    <span class="n">model_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;model_id&quot;</span><span class="p">)</span>
+</span><span id="AetherRequest-127"><a href="#AetherRequest-127"><span class="linenos">127</span></a>    <span class="n">tool_id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;tool_id&quot;</span><span class="p">)</span>
 </span><span id="AetherRequest-128"><a href="#AetherRequest-128"><span class="linenos">128</span></a>    <span class="nb">input</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Input</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;input&quot;</span><span class="p">)</span>
 </span><span id="AetherRequest-129"><a href="#AetherRequest-129"><span class="linenos">129</span></a>    <span class="n">meta</span><span class="p">:</span> <span class="n">RequestMeta</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">RequestMeta</span><span class="p">(),</span> <span class="n">alias</span><span class="o">=</span><span class="s2">&quot;meta&quot;</span><span class="p">)</span>
 </span><span id="AetherRequest-130"><a href="#AetherRequest-130"><span class="linenos">130</span></a>    <span class="n">extra</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">T</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
@@ -650,7 +650,7 @@
 
 <p>Attributes:
     task (str): 任务描述字符串
-    model_id (int): 模型ID，使用Field定义别名
+    tool_id (int): 模型ID，使用Field定义别名
     input (Input): 输入数据对象, 默认为空
     meta (RequestMeta): 请求元数据对象
     extra (Optional[T]): 可选的额外数据，类型为泛型T，默认为None</p>
@@ -668,13 +668,13 @@
     
 
                             </div>
-                            <div id="AetherRequest.model_id" class="classattr">
+                            <div id="AetherRequest.tool_id" class="classattr">
                                 <div class="attr variable">
-            <span class="name">model_id</span><span class="annotation">: int</span>
+            <span class="name">tool_id</span><span class="annotation">: int</span>
 
         
     </div>
-    <a class="headerlink" href="#AetherRequest.model_id"></a>
+    <a class="headerlink" href="#AetherRequest.tool_id"></a>
     
     
 
