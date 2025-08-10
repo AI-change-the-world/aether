@@ -67,6 +67,9 @@
                                 <a class="function" href="#BaseClient.from_config">from_config</a>
                         </li>
                         <li>
+                                <a class="function" href="#BaseClient.finalize">finalize</a>
+                        </li>
+                        <li>
                                 <a class="function" href="#BaseClient.call">call</a>
                         </li>
                 </ul>
@@ -116,7 +119,7 @@
 </span><span id="L-21"><a href="#L-21"><span class="linenos">21</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for all Aether clients.&quot;&quot;&quot;</span>
 </span><span id="L-22"><a href="#L-22"><span class="linenos">22</span></a>
 </span><span id="L-23"><a href="#L-23"><span class="linenos">23</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="L-24"><a href="#L-24"><span class="linenos">24</span></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BaseToolConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">auto_dispose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+</span><span id="L-24"><a href="#L-24"><span class="linenos">24</span></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BaseToolConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">auto_dispose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 </span><span id="L-25"><a href="#L-25"><span class="linenos">25</span></a>    <span class="p">):</span>
 </span><span id="L-26"><a href="#L-26"><span class="linenos">26</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
 </span><span id="L-27"><a href="#L-27"><span class="linenos">27</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">get_session</span><span class="p">()</span>
@@ -170,7 +173,13 @@
 </span><span id="L-75"><a href="#L-75"><span class="linenos">75</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">from_config</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">BaseToolConfig</span><span class="p">,</span> <span class="n">auto_dispose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;BaseClient&quot;</span><span class="p">:</span>
 </span><span id="L-76"><a href="#L-76"><span class="linenos">76</span></a>        <span class="k">pass</span>
 </span><span id="L-77"><a href="#L-77"><span class="linenos">77</span></a>
-</span><span id="L-78"><a href="#L-78"><span class="linenos">78</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="p">:</span> <span class="n">AetherRequest</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AetherResponse</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span> <span class="o">...</span>
+</span><span id="L-78"><a href="#L-78"><span class="linenos">78</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="p">:</span> <span class="n">AetherRequest</span><span class="p">):</span>
+</span><span id="L-79"><a href="#L-79"><span class="linenos">79</span></a>        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_dispose</span><span class="p">:</span>
+</span><span id="L-80"><a href="#L-80"><span class="linenos">80</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_last_tool_id</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">tool_id</span>
+</span><span id="L-81"><a href="#L-81"><span class="linenos">81</span></a>        <span class="k">else</span><span class="p">:</span>
+</span><span id="L-82"><a href="#L-82"><span class="linenos">82</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">dispose</span><span class="p">()</span>
+</span><span id="L-83"><a href="#L-83"><span class="linenos">83</span></a>
+</span><span id="L-84"><a href="#L-84"><span class="linenos">84</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="p">:</span> <span class="n">AetherRequest</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AetherResponse</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span> <span class="o">...</span>
 </span></pre></div>
 
 
@@ -190,7 +199,7 @@
 </span><span id="BaseClient-22"><a href="#BaseClient-22"><span class="linenos">22</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for all Aether clients.&quot;&quot;&quot;</span>
 </span><span id="BaseClient-23"><a href="#BaseClient-23"><span class="linenos">23</span></a>
 </span><span id="BaseClient-24"><a href="#BaseClient-24"><span class="linenos">24</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="BaseClient-25"><a href="#BaseClient-25"><span class="linenos">25</span></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BaseToolConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">auto_dispose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+</span><span id="BaseClient-25"><a href="#BaseClient-25"><span class="linenos">25</span></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BaseToolConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">auto_dispose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 </span><span id="BaseClient-26"><a href="#BaseClient-26"><span class="linenos">26</span></a>    <span class="p">):</span>
 </span><span id="BaseClient-27"><a href="#BaseClient-27"><span class="linenos">27</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
 </span><span id="BaseClient-28"><a href="#BaseClient-28"><span class="linenos">28</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">get_session</span><span class="p">()</span>
@@ -244,7 +253,13 @@
 </span><span id="BaseClient-76"><a href="#BaseClient-76"><span class="linenos">76</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">from_config</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">BaseToolConfig</span><span class="p">,</span> <span class="n">auto_dispose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;BaseClient&quot;</span><span class="p">:</span>
 </span><span id="BaseClient-77"><a href="#BaseClient-77"><span class="linenos">77</span></a>        <span class="k">pass</span>
 </span><span id="BaseClient-78"><a href="#BaseClient-78"><span class="linenos">78</span></a>
-</span><span id="BaseClient-79"><a href="#BaseClient-79"><span class="linenos">79</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="p">:</span> <span class="n">AetherRequest</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AetherResponse</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span> <span class="o">...</span>
+</span><span id="BaseClient-79"><a href="#BaseClient-79"><span class="linenos">79</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="p">:</span> <span class="n">AetherRequest</span><span class="p">):</span>
+</span><span id="BaseClient-80"><a href="#BaseClient-80"><span class="linenos">80</span></a>        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_dispose</span><span class="p">:</span>
+</span><span id="BaseClient-81"><a href="#BaseClient-81"><span class="linenos">81</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_last_tool_id</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">tool_id</span>
+</span><span id="BaseClient-82"><a href="#BaseClient-82"><span class="linenos">82</span></a>        <span class="k">else</span><span class="p">:</span>
+</span><span id="BaseClient-83"><a href="#BaseClient-83"><span class="linenos">83</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">dispose</span><span class="p">()</span>
+</span><span id="BaseClient-84"><a href="#BaseClient-84"><span class="linenos">84</span></a>
+</span><span id="BaseClient-85"><a href="#BaseClient-85"><span class="linenos">85</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="p">:</span> <span class="n">AetherRequest</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AetherResponse</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span> <span class="o">...</span>
 </span></pre></div>
 
 
@@ -256,14 +271,14 @@
                                         <input id="BaseClient.__init__-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
             
-        <span class="name">BaseClient</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n"><a href="config.html#BaseToolConfig">aether.call.config.BaseToolConfig</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">auto_dispose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></span>)</span>
+        <span class="name">BaseClient</span><span class="signature pdoc-code multiline">(<span class="param">	<span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n"><a href="config.html#BaseToolConfig">aether.call.config.BaseToolConfig</a></span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>,</span><span class="param">	<span class="n">auto_dispose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span></span>)</span>
 
                 <label class="view-source-button" for="BaseClient.__init__-view-source"><span>View Source</span></label>
 
     </div>
     <a class="headerlink" href="#BaseClient.__init__"></a>
             <div class="pdoc-code codehilite"><pre><span></span><span id="BaseClient.__init__-24"><a href="#BaseClient.__init__-24"><span class="linenos">24</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
-</span><span id="BaseClient.__init__-25"><a href="#BaseClient.__init__-25"><span class="linenos">25</span></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BaseToolConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">auto_dispose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+</span><span id="BaseClient.__init__-25"><a href="#BaseClient.__init__-25"><span class="linenos">25</span></a>        <span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BaseToolConfig</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">auto_dispose</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 </span><span id="BaseClient.__init__-26"><a href="#BaseClient.__init__-26"><span class="linenos">26</span></a>    <span class="p">):</span>
 </span><span id="BaseClient.__init__-27"><a href="#BaseClient.__init__-27"><span class="linenos">27</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
 </span><span id="BaseClient.__init__-28"><a href="#BaseClient.__init__-28"><span class="linenos">28</span></a>        <span class="bp">self</span><span class="o">.</span><span class="n">session</span> <span class="o">=</span> <span class="n">get_session</span><span class="p">()</span>
@@ -464,6 +479,28 @@
     
 
                             </div>
+                            <div id="BaseClient.finalize" class="classattr">
+                                        <input id="BaseClient.finalize-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">finalize</span><span class="signature pdoc-code condensed">(<span class="param"><span class="bp">self</span>, </span><span class="param"><span class="n">req</span><span class="p">:</span> <span class="n"><a href="../api/request.html#AetherRequest">aether.api.request.AetherRequest</a></span></span><span class="return-annotation">):</span></span>
+
+                <label class="view-source-button" for="BaseClient.finalize-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#BaseClient.finalize"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="BaseClient.finalize-79"><a href="#BaseClient.finalize-79"><span class="linenos">79</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="p">:</span> <span class="n">AetherRequest</span><span class="p">):</span>
+</span><span id="BaseClient.finalize-80"><a href="#BaseClient.finalize-80"><span class="linenos">80</span></a>        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">auto_dispose</span><span class="p">:</span>
+</span><span id="BaseClient.finalize-81"><a href="#BaseClient.finalize-81"><span class="linenos">81</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">_last_tool_id</span> <span class="o">=</span> <span class="n">req</span><span class="o">.</span><span class="n">tool_id</span>
+</span><span id="BaseClient.finalize-82"><a href="#BaseClient.finalize-82"><span class="linenos">82</span></a>        <span class="k">else</span><span class="p">:</span>
+</span><span id="BaseClient.finalize-83"><a href="#BaseClient.finalize-83"><span class="linenos">83</span></a>            <span class="bp">self</span><span class="o">.</span><span class="n">dispose</span><span class="p">()</span>
+</span></pre></div>
+
+
+    
+
+                            </div>
                             <div id="BaseClient.call" class="classattr">
                                         <input id="BaseClient.call-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
@@ -475,7 +512,7 @@
 
     </div>
     <a class="headerlink" href="#BaseClient.call"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="BaseClient.call-79"><a href="#BaseClient.call-79"><span class="linenos">79</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="p">:</span> <span class="n">AetherRequest</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AetherResponse</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span> <span class="o">...</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="BaseClient.call-85"><a href="#BaseClient.call-85"><span class="linenos">85</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="p">:</span> <span class="n">AetherRequest</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AetherResponse</span><span class="p">[</span><span class="n">T</span><span class="p">]:</span> <span class="o">...</span>
 </span></pre></div>
 
 

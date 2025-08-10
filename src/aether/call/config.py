@@ -4,8 +4,6 @@ from pydantic import BaseModel
 
 from aether.api.tool_type import ToolType
 
-global_activated_tool = {}
-
 
 class BaseToolConfig(BaseModel):
     tool_type: ToolType

@@ -21,7 +21,7 @@ class BaseClient(ABC):
     """Abstract base class for all Aether clients."""
 
     def __init__(
-        self, config: Optional[BaseToolConfig] = None, auto_dispose: bool = False
+        self, config: Optional[BaseToolConfig] = None, auto_dispose: bool = True
     ):
         self.config = config
         self.session = get_session()
@@ -74,5 +74,11 @@ class BaseClient(ABC):
     @staticmethod
     def from_config(config: BaseToolConfig, auto_dispose: bool = False) -> "BaseClient":
         pass
+
+    def finalize(self, req: AetherRequest):
+        if not self.auto_dispose:
+            self._last_tool_id = req.tool_id
+        else:
+            self.dispose()
 
     def call(self, req: AetherRequest, **kwargs) -> AetherResponse[T]: ...

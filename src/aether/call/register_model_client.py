@@ -87,12 +87,6 @@ class RegisterModelClient(BaseClient):
         if req.tool_id != 0:
             logger.warning(f"[{self.__task_name__}] tool_id is not 0, will be ignored")
         logger.info(f"[{self.__task_name__}] create register model task ...")
-        # task_json = {
-        #     "task_type": self.__task_name__,
-        #     "status": 0,
-        #     "req": req.model_dump_json(),
-        # }
-        # aether_task = AetherTaskCRUD.create(self.session, task_json)
         aether_task = self.create_task(req)
         task_json = aether_task.to_dict()
         if req.meta.execution == Execution.SYNC:

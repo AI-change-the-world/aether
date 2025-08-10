@@ -12,12 +12,8 @@ class FetchResultClient(BaseClient):
     def __call(self, req: AetherRequest) -> dict:
 
         try:
-            task_json = {
-                "task_type": self.__task_name__,
-                "status": 0,
-                "req": req.model_dump_json(),
-            }
-            task = AetherTaskCRUD.create(self.session, task_json)
+            task = self.create_task(req)
+            task_json = task.to_dict()
             task_id = int(req.input.data)
             log = AetherTaskCRUD.get_by_id(self.session, task_id)
             if log is None:
