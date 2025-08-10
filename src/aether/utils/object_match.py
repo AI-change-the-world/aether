@@ -1,7 +1,25 @@
 import json
+import traceback
 from typing import Union
 
 from pydantic import BaseModel, ValidationError
+
+from aether.utils.pydantic_utils import create_nested_dynamic_model
+from aether.utils.schema_utils import json_to_schema
+
+
+def validate(input: str | dict, target: str) -> bool:
+    try:
+        schema = json_to_schema(target)
+        model = create_nested_dynamic_model(model_name="Input", fields=schema)
+        if isinstance(input, str):
+            j = json.loads(input)
+        else:
+            j = input
+        return is_object_match(j, model)
+    except:
+        traceback.print_exc()
+        return False
 
 
 def is_object_match(

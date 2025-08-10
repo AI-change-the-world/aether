@@ -49,6 +49,9 @@
                     <a class="function" href="#infer_with_ultralytics">infer_with_ultralytics</a>
             </li>
             <li>
+                    <a class="function" href="#load_model">load_model</a>
+            </li>
+            <li>
                     <a class="function" href="#yolo_detect">yolo_detect</a>
             </li>
     </ul>
@@ -377,29 +380,54 @@
 </span><span id="L-303"><a href="#L-303"><span class="linenos">303</span></a>    <span class="k">return</span> <span class="n">model</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;bbox&quot;</span><span class="p">:</span> <span class="n">result</span><span class="p">}</span>
 </span><span id="L-304"><a href="#L-304"><span class="linenos">304</span></a>
 </span><span id="L-305"><a href="#L-305"><span class="linenos">305</span></a>
-</span><span id="L-306"><a href="#L-306"><span class="linenos">306</span></a><span class="k">def</span><span class="w"> </span><span class="nf">yolo_detect</span><span class="p">(</span>
-</span><span id="L-307"><a href="#L-307"><span class="linenos">307</span></a>    <span class="n">model_path_or_instance</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Any</span><span class="p">,</span>
-</span><span id="L-308"><a href="#L-308"><span class="linenos">308</span></a>    <span class="n">img</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">],</span>
-</span><span id="L-309"><a href="#L-309"><span class="linenos">309</span></a>    <span class="n">conf_thres</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span>
-</span><span id="L-310"><a href="#L-310"><span class="linenos">310</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]:</span>
-</span><span id="L-311"><a href="#L-311"><span class="linenos">311</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="L-312"><a href="#L-312"><span class="linenos">312</span></a><span class="sd">    使用YOLO模型对图像进行目标检测</span>
-</span><span id="L-313"><a href="#L-313"><span class="linenos">313</span></a>
-</span><span id="L-314"><a href="#L-314"><span class="linenos">314</span></a><span class="sd">    参数:</span>
-</span><span id="L-315"><a href="#L-315"><span class="linenos">315</span></a><span class="sd">        model_path_or_instance (str | Any): 模型路径字符串或已加载的模型实例</span>
-</span><span id="L-316"><a href="#L-316"><span class="linenos">316</span></a><span class="sd">        img (Union[np.ndarray, Image.Image]): 待检测的图像，可以是numpy数组或PIL图像对象</span>
-</span><span id="L-317"><a href="#L-317"><span class="linenos">317</span></a>
-</span><span id="L-318"><a href="#L-318"><span class="linenos">318</span></a><span class="sd">    返回:</span>
-</span><span id="L-319"><a href="#L-319"><span class="linenos">319</span></a><span class="sd">        Tuple[Any, Optional[dict]]: 检测结果元组，第一个元素为模型，第二个元素为检测结果</span>
-</span><span id="L-320"><a href="#L-320"><span class="linenos">320</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="L-321"><a href="#L-321"><span class="linenos">321</span></a>    <span class="c1"># 根据CUDA可用性选择运行设备</span>
-</span><span id="L-322"><a href="#L-322"><span class="linenos">322</span></a>    <span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
-</span><span id="L-323"><a href="#L-323"><span class="linenos">323</span></a>
-</span><span id="L-324"><a href="#L-324"><span class="linenos">324</span></a>    <span class="c1"># 根据依赖库的安装情况选择推理方式</span>
-</span><span id="L-325"><a href="#L-325"><span class="linenos">325</span></a>    <span class="k">if</span> <span class="n">__IS_ULTRALYTICS_INSTALLED__</span> <span class="ow">and</span> <span class="n">__IS_SUPERVISION_INSTALLED__</span><span class="p">:</span>
-</span><span id="L-326"><a href="#L-326"><span class="linenos">326</span></a>        <span class="k">return</span> <span class="n">infer_with_ultralytics</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">conf_thres</span><span class="p">)</span>
-</span><span id="L-327"><a href="#L-327"><span class="linenos">327</span></a>    <span class="k">else</span><span class="p">:</span>
-</span><span id="L-328"><a href="#L-328"><span class="linenos">328</span></a>        <span class="k">return</span> <span class="n">infer_with_pt</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">conf_thres</span><span class="p">)</span>
+</span><span id="L-306"><a href="#L-306"><span class="linenos">306</span></a><span class="k">def</span><span class="w"> </span><span class="nf">load_model</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+</span><span id="L-307"><a href="#L-307"><span class="linenos">307</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-308"><a href="#L-308"><span class="linenos">308</span></a><span class="sd">    加载模型</span>
+</span><span id="L-309"><a href="#L-309"><span class="linenos">309</span></a>
+</span><span id="L-310"><a href="#L-310"><span class="linenos">310</span></a><span class="sd">    参数:</span>
+</span><span id="L-311"><a href="#L-311"><span class="linenos">311</span></a><span class="sd">        model_path_or_instance (str | Any): 模型路径字符串或已加载的模型实例</span>
+</span><span id="L-312"><a href="#L-312"><span class="linenos">312</span></a>
+</span><span id="L-313"><a href="#L-313"><span class="linenos">313</span></a><span class="sd">    返回:</span>
+</span><span id="L-314"><a href="#L-314"><span class="linenos">314</span></a><span class="sd">        Any: 加载的模型实例</span>
+</span><span id="L-315"><a href="#L-315"><span class="linenos">315</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-316"><a href="#L-316"><span class="linenos">316</span></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="L-317"><a href="#L-317"><span class="linenos">317</span></a>        <span class="k">if</span> <span class="n">__IS_ULTRALYTICS_INSTALLED__</span> <span class="ow">and</span> <span class="n">__IS_SUPERVISION_INSTALLED__</span><span class="p">:</span>
+</span><span id="L-318"><a href="#L-318"><span class="linenos">318</span></a>            <span class="kn">from</span><span class="w"> </span><span class="nn">ultralytics</span><span class="w"> </span><span class="kn">import</span> <span class="n">YOLO</span>
+</span><span id="L-319"><a href="#L-319"><span class="linenos">319</span></a>
+</span><span id="L-320"><a href="#L-320"><span class="linenos">320</span></a>            <span class="n">model</span> <span class="o">=</span> <span class="n">YOLO</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">)</span>
+</span><span id="L-321"><a href="#L-321"><span class="linenos">321</span></a>            <span class="k">return</span> <span class="n">model</span>
+</span><span id="L-322"><a href="#L-322"><span class="linenos">322</span></a>        <span class="k">else</span><span class="p">:</span>
+</span><span id="L-323"><a href="#L-323"><span class="linenos">323</span></a>            <span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
+</span><span id="L-324"><a href="#L-324"><span class="linenos">324</span></a>            <span class="n">model_data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
+</span><span id="L-325"><a href="#L-325"><span class="linenos">325</span></a>                <span class="n">model_path_or_instance</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">weights_only</span><span class="o">=</span><span class="kc">False</span>
+</span><span id="L-326"><a href="#L-326"><span class="linenos">326</span></a>            <span class="p">)</span>
+</span><span id="L-327"><a href="#L-327"><span class="linenos">327</span></a>            <span class="k">return</span> <span class="n">model_data</span>
+</span><span id="L-328"><a href="#L-328"><span class="linenos">328</span></a>    <span class="k">return</span> <span class="n">model_path_or_instance</span>
+</span><span id="L-329"><a href="#L-329"><span class="linenos">329</span></a>
+</span><span id="L-330"><a href="#L-330"><span class="linenos">330</span></a>
+</span><span id="L-331"><a href="#L-331"><span class="linenos">331</span></a><span class="k">def</span><span class="w"> </span><span class="nf">yolo_detect</span><span class="p">(</span>
+</span><span id="L-332"><a href="#L-332"><span class="linenos">332</span></a>    <span class="n">model_path_or_instance</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Any</span><span class="p">,</span>
+</span><span id="L-333"><a href="#L-333"><span class="linenos">333</span></a>    <span class="n">img</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">],</span>
+</span><span id="L-334"><a href="#L-334"><span class="linenos">334</span></a>    <span class="n">conf_thres</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span>
+</span><span id="L-335"><a href="#L-335"><span class="linenos">335</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]:</span>
+</span><span id="L-336"><a href="#L-336"><span class="linenos">336</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="L-337"><a href="#L-337"><span class="linenos">337</span></a><span class="sd">    使用YOLO模型对图像进行目标检测</span>
+</span><span id="L-338"><a href="#L-338"><span class="linenos">338</span></a>
+</span><span id="L-339"><a href="#L-339"><span class="linenos">339</span></a><span class="sd">    参数:</span>
+</span><span id="L-340"><a href="#L-340"><span class="linenos">340</span></a><span class="sd">        model_path_or_instance (str | Any): 模型路径字符串或已加载的模型实例</span>
+</span><span id="L-341"><a href="#L-341"><span class="linenos">341</span></a><span class="sd">        img (Union[np.ndarray, Image.Image]): 待检测的图像，可以是numpy数组或PIL图像对象</span>
+</span><span id="L-342"><a href="#L-342"><span class="linenos">342</span></a>
+</span><span id="L-343"><a href="#L-343"><span class="linenos">343</span></a><span class="sd">    返回:</span>
+</span><span id="L-344"><a href="#L-344"><span class="linenos">344</span></a><span class="sd">        Tuple[Any, Optional[dict]]: 检测结果元组，第一个元素为模型，第二个元素为检测结果</span>
+</span><span id="L-345"><a href="#L-345"><span class="linenos">345</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="L-346"><a href="#L-346"><span class="linenos">346</span></a>    <span class="c1"># 根据CUDA可用性选择运行设备</span>
+</span><span id="L-347"><a href="#L-347"><span class="linenos">347</span></a>    <span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
+</span><span id="L-348"><a href="#L-348"><span class="linenos">348</span></a>
+</span><span id="L-349"><a href="#L-349"><span class="linenos">349</span></a>    <span class="c1"># 根据依赖库的安装情况选择推理方式</span>
+</span><span id="L-350"><a href="#L-350"><span class="linenos">350</span></a>    <span class="k">if</span> <span class="n">__IS_ULTRALYTICS_INSTALLED__</span> <span class="ow">and</span> <span class="n">__IS_SUPERVISION_INSTALLED__</span><span class="p">:</span>
+</span><span id="L-351"><a href="#L-351"><span class="linenos">351</span></a>        <span class="k">return</span> <span class="n">infer_with_ultralytics</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">conf_thres</span><span class="p">)</span>
+</span><span id="L-352"><a href="#L-352"><span class="linenos">352</span></a>    <span class="k">else</span><span class="p">:</span>
+</span><span id="L-353"><a href="#L-353"><span class="linenos">353</span></a>        <span class="k">return</span> <span class="n">infer_with_pt</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">conf_thres</span><span class="p">)</span>
 </span></pre></div>
 
 
@@ -853,6 +881,54 @@
 
 
                 </section>
+                <section id="load_model">
+                            <input id="load_model-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+<div class="attr function">
+            
+        <span class="def">def</span>
+        <span class="name">load_model</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">model_path_or_instance</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span></span><span class="return-annotation">) -> <span class="n">Any</span>:</span></span>
+
+                <label class="view-source-button" for="load_model-view-source"><span>View Source</span></label>
+
+    </div>
+    <a class="headerlink" href="#load_model"></a>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="load_model-307"><a href="#load_model-307"><span class="linenos">307</span></a><span class="k">def</span><span class="w"> </span><span class="nf">load_model</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+</span><span id="load_model-308"><a href="#load_model-308"><span class="linenos">308</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="load_model-309"><a href="#load_model-309"><span class="linenos">309</span></a><span class="sd">    加载模型</span>
+</span><span id="load_model-310"><a href="#load_model-310"><span class="linenos">310</span></a>
+</span><span id="load_model-311"><a href="#load_model-311"><span class="linenos">311</span></a><span class="sd">    参数:</span>
+</span><span id="load_model-312"><a href="#load_model-312"><span class="linenos">312</span></a><span class="sd">        model_path_or_instance (str | Any): 模型路径字符串或已加载的模型实例</span>
+</span><span id="load_model-313"><a href="#load_model-313"><span class="linenos">313</span></a>
+</span><span id="load_model-314"><a href="#load_model-314"><span class="linenos">314</span></a><span class="sd">    返回:</span>
+</span><span id="load_model-315"><a href="#load_model-315"><span class="linenos">315</span></a><span class="sd">        Any: 加载的模型实例</span>
+</span><span id="load_model-316"><a href="#load_model-316"><span class="linenos">316</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="load_model-317"><a href="#load_model-317"><span class="linenos">317</span></a>    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+</span><span id="load_model-318"><a href="#load_model-318"><span class="linenos">318</span></a>        <span class="k">if</span> <span class="n">__IS_ULTRALYTICS_INSTALLED__</span> <span class="ow">and</span> <span class="n">__IS_SUPERVISION_INSTALLED__</span><span class="p">:</span>
+</span><span id="load_model-319"><a href="#load_model-319"><span class="linenos">319</span></a>            <span class="kn">from</span><span class="w"> </span><span class="nn">ultralytics</span><span class="w"> </span><span class="kn">import</span> <span class="n">YOLO</span>
+</span><span id="load_model-320"><a href="#load_model-320"><span class="linenos">320</span></a>
+</span><span id="load_model-321"><a href="#load_model-321"><span class="linenos">321</span></a>            <span class="n">model</span> <span class="o">=</span> <span class="n">YOLO</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">)</span>
+</span><span id="load_model-322"><a href="#load_model-322"><span class="linenos">322</span></a>            <span class="k">return</span> <span class="n">model</span>
+</span><span id="load_model-323"><a href="#load_model-323"><span class="linenos">323</span></a>        <span class="k">else</span><span class="p">:</span>
+</span><span id="load_model-324"><a href="#load_model-324"><span class="linenos">324</span></a>            <span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
+</span><span id="load_model-325"><a href="#load_model-325"><span class="linenos">325</span></a>            <span class="n">model_data</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
+</span><span id="load_model-326"><a href="#load_model-326"><span class="linenos">326</span></a>                <span class="n">model_path_or_instance</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="n">device</span><span class="p">,</span> <span class="n">weights_only</span><span class="o">=</span><span class="kc">False</span>
+</span><span id="load_model-327"><a href="#load_model-327"><span class="linenos">327</span></a>            <span class="p">)</span>
+</span><span id="load_model-328"><a href="#load_model-328"><span class="linenos">328</span></a>            <span class="k">return</span> <span class="n">model_data</span>
+</span><span id="load_model-329"><a href="#load_model-329"><span class="linenos">329</span></a>    <span class="k">return</span> <span class="n">model_path_or_instance</span>
+</span></pre></div>
+
+
+            <div class="docstring"><p>加载模型</p>
+
+<p>参数:
+    model_path_or_instance (str | Any): 模型路径字符串或已加载的模型实例</p>
+
+<p>返回:
+    Any: 加载的模型实例</p>
+</div>
+
+
+                </section>
                 <section id="yolo_detect">
                             <input id="yolo_detect-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
@@ -864,29 +940,29 @@
 
     </div>
     <a class="headerlink" href="#yolo_detect"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="yolo_detect-307"><a href="#yolo_detect-307"><span class="linenos">307</span></a><span class="k">def</span><span class="w"> </span><span class="nf">yolo_detect</span><span class="p">(</span>
-</span><span id="yolo_detect-308"><a href="#yolo_detect-308"><span class="linenos">308</span></a>    <span class="n">model_path_or_instance</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Any</span><span class="p">,</span>
-</span><span id="yolo_detect-309"><a href="#yolo_detect-309"><span class="linenos">309</span></a>    <span class="n">img</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">],</span>
-</span><span id="yolo_detect-310"><a href="#yolo_detect-310"><span class="linenos">310</span></a>    <span class="n">conf_thres</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span>
-</span><span id="yolo_detect-311"><a href="#yolo_detect-311"><span class="linenos">311</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]:</span>
-</span><span id="yolo_detect-312"><a href="#yolo_detect-312"><span class="linenos">312</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-</span><span id="yolo_detect-313"><a href="#yolo_detect-313"><span class="linenos">313</span></a><span class="sd">    使用YOLO模型对图像进行目标检测</span>
-</span><span id="yolo_detect-314"><a href="#yolo_detect-314"><span class="linenos">314</span></a>
-</span><span id="yolo_detect-315"><a href="#yolo_detect-315"><span class="linenos">315</span></a><span class="sd">    参数:</span>
-</span><span id="yolo_detect-316"><a href="#yolo_detect-316"><span class="linenos">316</span></a><span class="sd">        model_path_or_instance (str | Any): 模型路径字符串或已加载的模型实例</span>
-</span><span id="yolo_detect-317"><a href="#yolo_detect-317"><span class="linenos">317</span></a><span class="sd">        img (Union[np.ndarray, Image.Image]): 待检测的图像，可以是numpy数组或PIL图像对象</span>
-</span><span id="yolo_detect-318"><a href="#yolo_detect-318"><span class="linenos">318</span></a>
-</span><span id="yolo_detect-319"><a href="#yolo_detect-319"><span class="linenos">319</span></a><span class="sd">    返回:</span>
-</span><span id="yolo_detect-320"><a href="#yolo_detect-320"><span class="linenos">320</span></a><span class="sd">        Tuple[Any, Optional[dict]]: 检测结果元组，第一个元素为模型，第二个元素为检测结果</span>
-</span><span id="yolo_detect-321"><a href="#yolo_detect-321"><span class="linenos">321</span></a><span class="sd">    &quot;&quot;&quot;</span>
-</span><span id="yolo_detect-322"><a href="#yolo_detect-322"><span class="linenos">322</span></a>    <span class="c1"># 根据CUDA可用性选择运行设备</span>
-</span><span id="yolo_detect-323"><a href="#yolo_detect-323"><span class="linenos">323</span></a>    <span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
-</span><span id="yolo_detect-324"><a href="#yolo_detect-324"><span class="linenos">324</span></a>
-</span><span id="yolo_detect-325"><a href="#yolo_detect-325"><span class="linenos">325</span></a>    <span class="c1"># 根据依赖库的安装情况选择推理方式</span>
-</span><span id="yolo_detect-326"><a href="#yolo_detect-326"><span class="linenos">326</span></a>    <span class="k">if</span> <span class="n">__IS_ULTRALYTICS_INSTALLED__</span> <span class="ow">and</span> <span class="n">__IS_SUPERVISION_INSTALLED__</span><span class="p">:</span>
-</span><span id="yolo_detect-327"><a href="#yolo_detect-327"><span class="linenos">327</span></a>        <span class="k">return</span> <span class="n">infer_with_ultralytics</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">conf_thres</span><span class="p">)</span>
-</span><span id="yolo_detect-328"><a href="#yolo_detect-328"><span class="linenos">328</span></a>    <span class="k">else</span><span class="p">:</span>
-</span><span id="yolo_detect-329"><a href="#yolo_detect-329"><span class="linenos">329</span></a>        <span class="k">return</span> <span class="n">infer_with_pt</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">conf_thres</span><span class="p">)</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="yolo_detect-332"><a href="#yolo_detect-332"><span class="linenos">332</span></a><span class="k">def</span><span class="w"> </span><span class="nf">yolo_detect</span><span class="p">(</span>
+</span><span id="yolo_detect-333"><a href="#yolo_detect-333"><span class="linenos">333</span></a>    <span class="n">model_path_or_instance</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">Any</span><span class="p">,</span>
+</span><span id="yolo_detect-334"><a href="#yolo_detect-334"><span class="linenos">334</span></a>    <span class="n">img</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Image</span><span class="o">.</span><span class="n">Image</span><span class="p">],</span>
+</span><span id="yolo_detect-335"><a href="#yolo_detect-335"><span class="linenos">335</span></a>    <span class="n">conf_thres</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span>
+</span><span id="yolo_detect-336"><a href="#yolo_detect-336"><span class="linenos">336</span></a><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">dict</span><span class="p">]]:</span>
+</span><span id="yolo_detect-337"><a href="#yolo_detect-337"><span class="linenos">337</span></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+</span><span id="yolo_detect-338"><a href="#yolo_detect-338"><span class="linenos">338</span></a><span class="sd">    使用YOLO模型对图像进行目标检测</span>
+</span><span id="yolo_detect-339"><a href="#yolo_detect-339"><span class="linenos">339</span></a>
+</span><span id="yolo_detect-340"><a href="#yolo_detect-340"><span class="linenos">340</span></a><span class="sd">    参数:</span>
+</span><span id="yolo_detect-341"><a href="#yolo_detect-341"><span class="linenos">341</span></a><span class="sd">        model_path_or_instance (str | Any): 模型路径字符串或已加载的模型实例</span>
+</span><span id="yolo_detect-342"><a href="#yolo_detect-342"><span class="linenos">342</span></a><span class="sd">        img (Union[np.ndarray, Image.Image]): 待检测的图像，可以是numpy数组或PIL图像对象</span>
+</span><span id="yolo_detect-343"><a href="#yolo_detect-343"><span class="linenos">343</span></a>
+</span><span id="yolo_detect-344"><a href="#yolo_detect-344"><span class="linenos">344</span></a><span class="sd">    返回:</span>
+</span><span id="yolo_detect-345"><a href="#yolo_detect-345"><span class="linenos">345</span></a><span class="sd">        Tuple[Any, Optional[dict]]: 检测结果元组，第一个元素为模型，第二个元素为检测结果</span>
+</span><span id="yolo_detect-346"><a href="#yolo_detect-346"><span class="linenos">346</span></a><span class="sd">    &quot;&quot;&quot;</span>
+</span><span id="yolo_detect-347"><a href="#yolo_detect-347"><span class="linenos">347</span></a>    <span class="c1"># 根据CUDA可用性选择运行设备</span>
+</span><span id="yolo_detect-348"><a href="#yolo_detect-348"><span class="linenos">348</span></a>    <span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda&quot;</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;cpu&quot;</span>
+</span><span id="yolo_detect-349"><a href="#yolo_detect-349"><span class="linenos">349</span></a>
+</span><span id="yolo_detect-350"><a href="#yolo_detect-350"><span class="linenos">350</span></a>    <span class="c1"># 根据依赖库的安装情况选择推理方式</span>
+</span><span id="yolo_detect-351"><a href="#yolo_detect-351"><span class="linenos">351</span></a>    <span class="k">if</span> <span class="n">__IS_ULTRALYTICS_INSTALLED__</span> <span class="ow">and</span> <span class="n">__IS_SUPERVISION_INSTALLED__</span><span class="p">:</span>
+</span><span id="yolo_detect-352"><a href="#yolo_detect-352"><span class="linenos">352</span></a>        <span class="k">return</span> <span class="n">infer_with_ultralytics</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">conf_thres</span><span class="p">)</span>
+</span><span id="yolo_detect-353"><a href="#yolo_detect-353"><span class="linenos">353</span></a>    <span class="k">else</span><span class="p">:</span>
+</span><span id="yolo_detect-354"><a href="#yolo_detect-354"><span class="linenos">354</span></a>        <span class="k">return</span> <span class="n">infer_with_pt</span><span class="p">(</span><span class="n">model_path_or_instance</span><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">conf_thres</span><span class="p">)</span>
 </span></pre></div>
 
 

@@ -1,0 +1,39 @@
+{
+    "req": {
+        "temperature": {
+            "type": "float",
+            "default": 0.7
+        },
+        "history": {
+            "type": "list",
+            "default": "...",
+            "items": {
+                "type": "object",
+                "fields": {
+                    "role": {
+                        "type": "string",
+                        "default": "user"
+                    },
+                    "content": {
+                        "type": "string",
+                        "default": "..."
+                    }
+                }
+            }
+        }
+    },
+    "resp": {
+        "uuid": {
+            "type": "string",
+            "default": "..."
+        },
+        "output": {
+            "type": "string",
+            "default": "..."
+        },
+        "done": {
+            "type": "boolean",
+            "default": "..."
+        }
+    }
+}

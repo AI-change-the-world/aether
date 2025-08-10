@@ -2,7 +2,7 @@ from aether import init_db
 from aether.api.input import Input
 from aether.api.request import AetherRequest
 from aether.api.response import AetherResponse
-from aether.call import YoloClient
+from aether.call import ActivatedToolRegistry, YoloClient
 
 
 def test_yolo_detection():
@@ -10,7 +10,7 @@ def test_yolo_detection():
     client = YoloClient(auto_dispose=True)
     req = AetherRequest(
         task="yolo_detection",
-        model_id=2,
+        tool_id=2,
         input=Input(data=r"tests\1.webp"),
         extra={"conf_thres": 0.5},
     )
@@ -19,3 +19,4 @@ def test_yolo_detection():
         isinstance(res, AetherResponse) and res.success and len(res.output["bbox"]) == 8
     )
     print(res.output)
+    assert ActivatedToolRegistry.instance().get(2) is None

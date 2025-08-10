@@ -303,6 +303,31 @@ def infer_with_ultralytics(
     return model, {"bbox": result}
 
 
+def load_model(model_path_or_instance: str | Any) -> Any:
+    """
+    加载模型
+
+    参数:
+        model_path_or_instance (str | Any): 模型路径字符串或已加载的模型实例
+
+    返回:
+        Any: 加载的模型实例
+    """
+    if isinstance(model_path_or_instance, str):
+        if __IS_ULTRALYTICS_INSTALLED__ and __IS_SUPERVISION_INSTALLED__:
+            from ultralytics import YOLO
+
+            model = YOLO(model_path_or_instance)
+            return model
+        else:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
+            model_data = torch.load(
+                model_path_or_instance, map_location=device, weights_only=False
+            )
+            return model_data
+    return model_path_or_instance
+
+
 def yolo_detect(
     model_path_or_instance: str | Any,
     img: Union[np.ndarray, Image.Image],

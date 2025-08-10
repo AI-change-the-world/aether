@@ -6,82 +6,95 @@ import cv2
 from aether.api.request import AetherRequest
 from aether.api.response import with_timing_response
 from aether.call.base import BaseClient
+from aether.call.client import ActivatedToolRegistry, register_on_success
 from aether.call.config import YOLOConfig
 from aether.common.logger import logger
 from aether.models.task.task_crud import AetherTaskCRUD
-from aether.models.tool_model.tool_model_crud import AetherToolModelCRUD
+from aether.models.tool.tool_crud import AetherToolCRUD
+from aether.utils.object_match import validate
 
 
 class YoloClient(BaseClient):
     def __init__(self, auto_dispose: bool = False):
         super().__init__(auto_dispose=auto_dispose)
 
+    @register_on_success(
+        lambda self, args, kwargs: getattr(self, "_last_tool_id", None)
+    )
     @with_timing_response
     def __call(self, req: AetherRequest) -> dict:
-        """
-        执行YOLO推理任务的调用函数
-
-        Args:
-            req (AetherRequest): 包含任务请求信息的对象，必须包含task字段且值为"yolo_detection"
-
-        Returns:
-            dict: 包含任务执行结果的字典
-
-        Raises:
-            AssertionError: 当req.task不等于"yolo_detection"时抛出断言错误
-        """
         __task_name__ = "call_yolo_inference"
-        # 验证任务类型必须为yolo_detection
+
+        # 校验任务类型
         assert req.task == "yolo_detection", "task must be yolo_detection"
 
-        # 构造任务JSON数据
-        task_json = {
-            "task_type": __task_name__,
-            "status": 0,
-            "req": req.model_dump_json(),
-        }
+        aether_task = self._create_task(req, __task_name__)
 
         try:
-
-            # 创建Aether任务记录
-            aether_task = AetherTaskCRUD.create(self.session, task_json)
-
-            if req.model_id == 0:
-                logger.error(f"[{__task_name__}] model_id is 0")
-                raise ValueError("model_id is 0")
-
-            tool_model = AetherToolModelCRUD.get_by_id(self.session, req.model_id)
-            if tool_model is None:
-                logger.error(f"[{__task_name__}] tool model not found")
+            tool_model = AetherToolCRUD.get_by_id(self.session, req.tool_id)
+            if not tool_model:
                 raise ValueError("tool model not found")
-            tool_model_config = json.loads(tool_model.tool_model_config)
-            config = YOLOConfig(**tool_model_config)
-            if req.input is None:
-                logger.error(f"[{__task_name__}] input is None")
-                raise ValueError("input is None")
 
-            # 导入YOLO检测模块
-            from aether.call.yolo.inference import yolo_detect
+            self._validate_input(req.extra, tool_model.req, __task_name__)
 
-            img = req.input.data
-            # TODO get data from input
-            # default local path
-            image = cv2.imread(img)
-            thres = req.extra.get("conf_thres", 0.25)
-            model, result = yolo_detect(config.model_path, image, thres)
-            if result is None:
-                raise ValueError("result is None")
+            self.model = self._load_or_get_model(req, tool_model)
+            result = self._run_inference(self.model, req)
 
-            self.model = model
+            self._validate_output(result, tool_model.resp, __task_name__)
+
             result["task_id"] = aether_task.aether_task_id
-            # TODO validate output
+            result["image"] = req.input.data
+
+            self.finalize(req)
+
             return result
 
         except Exception as e:
             logger.error(f"[{__task_name__}] error: {e}")
-            task_json["status"] = 4
-            AetherTaskCRUD.update(self.session, aether_task.aether_task_id, task_json)
-            raise e
+            if aether_task:
+                AetherTaskCRUD.update(
+                    self.session, aether_task.aether_task_id, {"status": 4}
+                )
+            raise
+
+    # --- 辅助方法 ---
+
+    def _create_task(self, req, task_name):
+        task_json = {
+            "task_type": task_name,
+            "status": 0,
+            "req": req.model_dump_json(),
+        }
+        return AetherTaskCRUD.create(self.session, task_json)
+
+    def _validate_input(self, extra, expected_schema, task_name):
+        if extra and expected_schema is not None:
+            if not validate(extra, expected_schema):
+                raise ValueError(f"[{task_name}] Input extra is not valid")
+
+    def _load_or_get_model(self, req, tool_model):
+        from aether.call.yolo.inference import load_model
+
+        model = ActivatedToolRegistry.instance().get(req.tool_id)
+        if model:
+            return model
+
+        logger.info(f"[call_yolo_inference] tool not found, loading...")
+        tool_config = json.loads(tool_model.tool_config)
+        config = YOLOConfig(**tool_config)
+        return load_model(config.model_path)
+
+    def _run_inference(self, model, req):
+        from aether.call.yolo.inference import yolo_detect
+
+        image = cv2.imread(req.input.data)
+        _, result = yolo_detect(model, image, req.extra.get("conf_thres", 0.25))
+        return result or {}
+
+    def _validate_output(self, result, expected_schema, task_name):
+        if expected_schema is not None:
+            if not validate(result, expected_schema):
+                raise ValueError(f"[{task_name}] result is not valid")
 
     def call(self, req, **kwargs) -> dict:
         return self.__call(req)
