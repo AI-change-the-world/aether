@@ -1,16 +1,13 @@
 import json
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Tuple
 
 TYPE_MAP = {
-    "str": str,
     "int": int,
     "float": float,
     "bool": bool,
     "list": list,
-    "dict": dict,
     "object": dict,
     "string": str,
-    "boolean": bool,
 }
 
 REVERSE_TYPE_MAP = {v: k for k, v in TYPE_MAP.items()}

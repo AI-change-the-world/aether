@@ -65,7 +65,7 @@ class RegisterModelRequest(BaseModel):
                                  : TODO 待完善, yolo example :
                                     {
                                                 "image": {
-                                                    "type": "str",
+                                                    "type": "string",
                                                     "default": "*.png"
                                                 },
                                                 "bbox": {
@@ -91,7 +91,7 @@ class RegisterModelRequest(BaseModel):
                                                         "default": "..."
                                                         },
                                                         "label": {
-                                                        "type": "str",
+                                                        "type": "string",
                                                         "default": "..."
                                                         }
                                                     }

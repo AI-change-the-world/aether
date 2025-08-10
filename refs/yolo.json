@@ -7,7 +7,7 @@
     },
     "resp": {
         "image": {
-            "type": "str",
+            "type": "string",
             "default": "*.png"
         },
         "bbox": {
@@ -33,7 +33,7 @@
                         "default": "..."
                     },
                     "label": {
-                        "type": "str",
+                        "type": "string",
                         "default": "..."
                     }
                 }
