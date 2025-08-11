@@ -1,6 +1,6 @@
 import gc
 from abc import ABC
-from typing import Optional
+from typing import Optional, Type
 
 import torch
 
@@ -21,12 +21,13 @@ class BaseClient(ABC):
     """Abstract base class for all Aether clients."""
 
     def __init__(
-        self, config: Optional[BaseToolConfig] = None, auto_dispose: bool = True
+        self, config: Optional[Type[BaseToolConfig]] = None, auto_dispose: bool = True
     ):
         self.config = config
         self.session = get_session()
-        self.model = None
+        self.tool = None
         self.auto_dispose = auto_dispose
+        self.tool_model = getattr(self.config, "tool_model", None)
 
     def create_task(self, req: AetherRequest) -> Optional[AetherTask]:
         try:
@@ -67,18 +68,5 @@ class BaseClient(ABC):
                 torch.cuda.empty_cache()
             self.model = None
             gc.collect()
-
-    def re_activate(self):
-        pass
-
-    @staticmethod
-    def from_config(config: BaseToolConfig, auto_dispose: bool = False) -> "BaseClient":
-        pass
-
-    def finalize(self, req: AetherRequest):
-        if not self.auto_dispose:
-            self._last_tool_id = req.tool_id
-        else:
-            self.dispose()
 
     def call(self, req: AetherRequest, **kwargs) -> AetherResponse[T]: ...

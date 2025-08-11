@@ -1,10 +1,10 @@
 import json
 import uuid
+from typing import Optional
 
 from aether.api.request import AetherRequest
 from aether.api.response import with_timing_response
 from aether.call.base import BaseClient
-from aether.call.client import ActivatedToolRegistry, register_on_success
 from aether.call.config import OpenAIChatConfig
 from aether.common.logger import logger
 from aether.models.task.task_crud import AetherTaskCRUD
@@ -20,12 +20,19 @@ class OpenAIClient(BaseClient):
 
     __task_name__ = "call_openai_model"
 
-    def __init__(self, auto_dispose: bool = False):
-        super().__init__(auto_dispose=auto_dispose)
+    def __init__(self, config: OpenAIChatConfig, auto_dispose: bool = False):
+        self.auto_dispose = auto_dispose
+        self.config = config
+        try:
+            from openai import OpenAI
 
-    @register_on_success(
-        lambda self, args, kwargs: getattr(self, "_last_tool_id", None)
-    )
+            self.model = OpenAI(
+                api_key=self.config.api_key,
+                base_url=self.config.base_url,
+            )
+        except ImportError:
+            raise ImportError("The 'openai' package is not installed.")
+
     @with_timing_response
     def __call(self, req: AetherRequest) -> dict:
         """
@@ -59,31 +66,16 @@ class OpenAIClient(BaseClient):
             raise ValueError("tool_id is 0")
 
         try:
-            self.model = ActivatedToolRegistry.instance().get(req.tool_id)
-
             if self.model is None:
-                logger.info(f"[{self.__task_name__}] tool model not found, create one")
+                logger.error(f"[{self.__task_name__}] model is null")
+                raise ValueError("model is null")
 
-                from openai import OpenAI
+            model_name = self.config.model_name
 
-                # 获取工具模型配置
-                tool_model = AetherToolCRUD.get_by_id(self.session, req.tool_id)
-                if tool_model is None:
-                    logger.error(f"[{self.__task_name__}] tool model not found")
-                    raise ValueError("tool model not found")
-
-                tool_config = json.loads(tool_model.tool_config)
-                config = OpenAIChatConfig(**tool_config)
-                self.model = OpenAI(
-                    api_key=config.api_key,
-                    base_url=config.base_url,
-                )
-            model_name = config.model_name
-
-            if tool_model.req is not None and req.extra is not None:
-                if not validate(req.extra, tool_model.req):
+            if self.tool_model.req is not None and req.extra is not None:
+                if not validate(req.extra, self.tool_model.req):
                     raise Exception(
-                        f"[{self.__task_name__}] extra not match req\nExpected: {tool_model.req}\nGot: {req.extra}"
+                        f"[{self.__task_name__}] extra not match req\nExpected: {self.tool_model.req}\nGot: {req.extra}"
                     )
 
             # 构造对话历史并调用模型
@@ -98,9 +90,6 @@ class OpenAIClient(BaseClient):
             # 更新任务状态为成功
             task_json["status"] = 1
             AetherTaskCRUD.update(self.session, aether_task.aether_task_id, task_json)
-
-            # 如果不自动释放资源，则需要保存模型配置
-            self.finalize(req)
 
             return {
                 "uuid": str(uuid.uuid4()),

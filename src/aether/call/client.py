@@ -1,9 +1,12 @@
 import functools
+import json
 from threading import RLock
 from typing import Callable, Dict, Optional
 
+from aether.call._map import create_client_from_json
 from aether.call.base import BaseClient
 from aether.common.logger import logger
+from aether.models.tool.tool_crud import AetherToolCRUD
 
 
 class ActivatedToolRegistry:
@@ -72,3 +75,42 @@ def register_on_success(get_tool_id: Callable):
         return wrapper
 
     return decorator
+
+
+class ClientManager:
+    """统一管理客户端的生命周期和缓存"""
+
+    def __init__(self, registry: ActivatedToolRegistry, session):
+        self.registry = registry
+        self.session = session
+
+    def get_client(self, tool_id: int) -> BaseClient:
+        """根据 tool_id 获取或创建并缓存一个客户端实例"""
+        client = self.registry.get(tool_id)
+        if client:
+            logger.info(f"Using cached client for tool_id: {tool_id}")
+            return client
+
+        # 缓存中没有，则创建新的客户端
+        logger.info(f"Client for tool_id: {tool_id} not found, creating new one.")
+        tool_model = AetherToolCRUD.get_by_id(self.session, tool_id)
+        if not tool_model:
+            raise ValueError(f"Tool model with ID {tool_id} not found.")
+
+        try:
+            tool_config = json.loads(tool_model.tool_config)
+            new_client = create_client_from_json(tool_config)
+
+            # 注册到缓存中（如果客户端不需要自动释放）
+            # 这段逻辑应在ClientManager中，而不是在客户端内部
+            if not new_client.auto_dispose:
+                self.registry.register(tool_id, new_client)
+
+            return new_client
+
+        except json.JSONDecodeError:
+            logger.error(f"Tool model config for tool_id {tool_id} is not valid json")
+            raise ValueError("tool model config is not valid json")
+        except Exception as e:
+            logger.error(f"Failed to create client for tool_id {tool_id}: {e}")
+            raise e
