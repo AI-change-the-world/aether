@@ -32,6 +32,4 @@ def init_db(url: str = None):
     logger.info(f"init db, url: {engine.url}")
     create_database_if_not_exists(str(engine.url))
     Base.metadata.create_all(bind=engine)
-    logger.info(
-        f"注册的表：{Base.metadata.tables.keys()}",
-    )
+    logger.info(f"注册的表：{Base.metadata.tables.keys()}",)

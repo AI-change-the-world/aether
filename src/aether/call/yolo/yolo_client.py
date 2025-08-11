@@ -1,4 +1,3 @@
-
 import cv2
 
 from aether.api.request import AetherRequest
@@ -14,13 +13,13 @@ class YoloClient(BaseClient):
 
     __task_name__ = "call_yolo_inference"
 
-    def __init__(self, config: YOLOConfig, auto_dispose: bool = False):
-        self.auto_dispose = auto_dispose
+    def __init__(self, config: YOLOConfig):
+        super().__init__(config)
         self.config = config
-        self.model = None
+        self.tool = None
 
         try:
-            self.model = self._load_or_get_model()
+            self.tool = self._load_or_get_model()
         except Exception as e:
             logger.error(f"[{self.__task_name__}] load model error: {e}")
             raise
@@ -36,14 +35,12 @@ class YoloClient(BaseClient):
             if self.tool_model is not None:
                 self._validate_input(req.extra, self.tool_model.req, self.__task_name__)
 
-            result = self._run_inference(self.model, req)
+            result = self._run_inference(self.tool, req)
             if self.tool_model is not None:
                 self._validate_output(result, self.tool_model.resp, self.__task_name__)
 
             result["task_id"] = aether_task.aether_task_id
             result["image"] = req.input.data
-
-            self.finalize(req)
 
             return result
 
@@ -54,6 +51,9 @@ class YoloClient(BaseClient):
                     self.session, aether_task.aether_task_id, {"status": 4}
                 )
             raise
+        finally:
+            if req.meta.auto_dispose:
+                self.dispose()
 
     # --- 辅助方法 ---
 
@@ -70,9 +70,7 @@ class YoloClient(BaseClient):
             if not validate(extra, expected_schema):
                 raise ValueError(f"[{task_name}] Input extra is not valid")
 
-    def _load_or_get_model(
-        self,
-    ):
+    def _load_or_get_model(self,):
         from aether.call.yolo.inference import load_model
 
         return load_model(self.config.model_path)

@@ -20,15 +20,14 @@ class OpenAIClient(BaseClient):
 
     __task_name__ = "call_openai_model"
 
-    def __init__(self, config: OpenAIChatConfig, auto_dispose: bool = False):
-        self.auto_dispose = auto_dispose
+    def __init__(self, config: OpenAIChatConfig):
+        super().__init__(config)
         self.config = config
         try:
             from openai import OpenAI
 
-            self.model = OpenAI(
-                api_key=self.config.api_key,
-                base_url=self.config.base_url,
+            self.tool = OpenAI(
+                api_key=self.config.api_key, base_url=self.config.base_url,
             )
         except ImportError:
             raise ImportError("The 'openai' package is not installed.")
@@ -66,7 +65,7 @@ class OpenAIClient(BaseClient):
             raise ValueError("tool_id is 0")
 
         try:
-            if self.model is None:
+            if self.tool is None:
                 logger.error(f"[{self.__task_name__}] model is null")
                 raise ValueError("model is null")
 
@@ -83,7 +82,7 @@ class OpenAIClient(BaseClient):
             temperature = getattr(req.extra, "temperature", 0.7) if req.extra else 0.7
             history.append({"role": "user", "content": req.input.data})
 
-            response = self.model.chat.completions.create(
+            response = self.tool.chat.completions.create(
                 model=model_name, messages=history, temperature=temperature
             )
 
@@ -109,6 +108,9 @@ class OpenAIClient(BaseClient):
             task_json["status"] = 4
             AetherTaskCRUD.update(self.session, aether_task.aether_task_id, task_json)
             raise e
+        finally:
+            if req.meta.auto_dispose:
+                self.dispose()
 
     def call(self, req, **kwargs):
         return self.__call(req)

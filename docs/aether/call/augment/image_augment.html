@@ -67,8 +67,8 @@
 </span><span id="L-2"><a href="#L-2"><span class="linenos">2</span></a>
 </span><span id="L-3"><a href="#L-3"><span class="linenos">3</span></a>
 </span><span id="L-4"><a href="#L-4"><span class="linenos">4</span></a><span class="k">class</span><span class="w"> </span><span class="nc">ImageCvAugment</span><span class="p">(</span><span class="n">BaseClient</span><span class="p">):</span>
-</span><span id="L-5"><a href="#L-5"><span class="linenos">5</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auto_dispose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-</span><span id="L-6"><a href="#L-6"><span class="linenos">6</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">auto_dispose</span><span class="p">)</span>
+</span><span id="L-5"><a href="#L-5"><span class="linenos">5</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+</span><span id="L-6"><a href="#L-6"><span class="linenos">6</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 </span><span id="L-7"><a href="#L-7"><span class="linenos">7</span></a>
 </span><span id="L-8"><a href="#L-8"><span class="linenos">8</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 </span><span id="L-9"><a href="#L-9"><span class="linenos">9</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__call</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
@@ -88,8 +88,8 @@
     </div>
     <a class="headerlink" href="#ImageCvAugment"></a>
             <div class="pdoc-code codehilite"><pre><span></span><span id="ImageCvAugment-5"><a href="#ImageCvAugment-5"><span class="linenos"> 5</span></a><span class="k">class</span><span class="w"> </span><span class="nc">ImageCvAugment</span><span class="p">(</span><span class="n">BaseClient</span><span class="p">):</span>
-</span><span id="ImageCvAugment-6"><a href="#ImageCvAugment-6"><span class="linenos"> 6</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auto_dispose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-</span><span id="ImageCvAugment-7"><a href="#ImageCvAugment-7"><span class="linenos"> 7</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">auto_dispose</span><span class="p">)</span>
+</span><span id="ImageCvAugment-6"><a href="#ImageCvAugment-6"><span class="linenos"> 6</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+</span><span id="ImageCvAugment-7"><a href="#ImageCvAugment-7"><span class="linenos"> 7</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 </span><span id="ImageCvAugment-8"><a href="#ImageCvAugment-8"><span class="linenos"> 8</span></a>
 </span><span id="ImageCvAugment-9"><a href="#ImageCvAugment-9"><span class="linenos"> 9</span></a>    <span class="k">def</span><span class="w"> </span><span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 </span><span id="ImageCvAugment-10"><a href="#ImageCvAugment-10"><span class="linenos">10</span></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">__call</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>
@@ -104,14 +104,14 @@
                                         <input id="ImageCvAugment.__init__-view-source" class="view-source-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
 <div class="attr function">
             
-        <span class="name">ImageCvAugment</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">config</span><span class="o">=</span><span class="kc">None</span>, </span><span class="param"><span class="n">auto_dispose</span><span class="o">=</span><span class="kc">True</span></span>)</span>
+        <span class="name">ImageCvAugment</span><span class="signature pdoc-code condensed">(<span class="param"><span class="n">config</span><span class="o">=</span><span class="kc">None</span></span>)</span>
 
                 <label class="view-source-button" for="ImageCvAugment.__init__-view-source"><span>View Source</span></label>
 
     </div>
     <a class="headerlink" href="#ImageCvAugment.__init__"></a>
-            <div class="pdoc-code codehilite"><pre><span></span><span id="ImageCvAugment.__init__-6"><a href="#ImageCvAugment.__init__-6"><span class="linenos">6</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">auto_dispose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
-</span><span id="ImageCvAugment.__init__-7"><a href="#ImageCvAugment.__init__-7"><span class="linenos">7</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">auto_dispose</span><span class="p">)</span>
+            <div class="pdoc-code codehilite"><pre><span></span><span id="ImageCvAugment.__init__-6"><a href="#ImageCvAugment.__init__-6"><span class="linenos">6</span></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+</span><span id="ImageCvAugment.__init__-7"><a href="#ImageCvAugment.__init__-7"><span class="linenos">7</span></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
 </span></pre></div>
 
 
@@ -143,15 +143,12 @@
                                     <div><dt><a href="../base.html#BaseClient">aether.call.base.BaseClient</a></dt>
                                 <dd id="ImageCvAugment.config" class="variable"><a href="../base.html#BaseClient.config">config</a></dd>
                 <dd id="ImageCvAugment.session" class="variable"><a href="../base.html#BaseClient.session">session</a></dd>
-                <dd id="ImageCvAugment.model" class="variable"><a href="../base.html#BaseClient.model">model</a></dd>
-                <dd id="ImageCvAugment.auto_dispose" class="variable"><a href="../base.html#BaseClient.auto_dispose">auto_dispose</a></dd>
+                <dd id="ImageCvAugment.tool" class="variable"><a href="../base.html#BaseClient.tool">tool</a></dd>
+                <dd id="ImageCvAugment.tool_model" class="variable"><a href="../base.html#BaseClient.tool_model">tool_model</a></dd>
                 <dd id="ImageCvAugment.create_task" class="function"><a href="../base.html#BaseClient.create_task">create_task</a></dd>
                 <dd id="ImageCvAugment.get_tool" class="function"><a href="../base.html#BaseClient.get_tool">get_tool</a></dd>
                 <dd id="ImageCvAugment.threaded_task_wrapper" class="function"><a href="../base.html#BaseClient.threaded_task_wrapper">threaded_task_wrapper</a></dd>
                 <dd id="ImageCvAugment.dispose" class="function"><a href="../base.html#BaseClient.dispose">dispose</a></dd>
-                <dd id="ImageCvAugment.re_activate" class="function"><a href="../base.html#BaseClient.re_activate">re_activate</a></dd>
-                <dd id="ImageCvAugment.from_config" class="function"><a href="../base.html#BaseClient.from_config">from_config</a></dd>
-                <dd id="ImageCvAugment.finalize" class="function"><a href="../base.html#BaseClient.finalize">finalize</a></dd>
 
             </div>
                                 </dl>

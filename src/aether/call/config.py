@@ -9,6 +9,8 @@ class BaseToolConfig(BaseModel):
     tool_type: ToolType
     description: Optional[str] = None
 
+    model_config = {"extra": "allow"}
+
 
 # ---------- OpenAI ----------
 

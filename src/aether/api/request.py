@@ -45,6 +45,7 @@ class RequestMeta(BaseModel):
     """
 
     execution: Execution = Field(default=Execution.SYNC, alias="execution")
+    auto_dispose: bool = Field(default=True, alias="auto_dispose")
 
 
 class RegisterModelRequest(BaseModel):

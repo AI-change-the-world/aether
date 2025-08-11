@@ -7,7 +7,8 @@ from aether.api.request import (
     RequestMeta,
 )
 from aether.api.response import AetherResponse
-from aether.call import FetchResultClient, RegisterModelClient
+from aether.call.fetch_result_client import FetchResultClient
+from aether.call.register_model_client import RegisterModelClient
 
 
 def test_register_model():

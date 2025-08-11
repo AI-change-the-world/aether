@@ -1,4 +1,5 @@
 import json
+import traceback
 from typing import Any, Dict, Type
 
 from pydantic import ValidationError
@@ -36,12 +37,15 @@ TOOL_CLIENT_MAP: Dict[str, Type[BaseClient]] = {
 }
 
 
-def create_client_from_json(json_data: str, tool_model: Any):
+def create_client_from_json(json_data: str | dict, tool_model: Any):
     """
     根据 JSON 字符串动态创建配置和客户端实例。
     """
     try:
-        data = json.loads(json_data)
+        if isinstance(json_data, str):
+            data = json.loads(json_data)
+        else:
+            data = json_data
         tool_type = data.get("tool_type")
 
         if not tool_type:
@@ -69,4 +73,5 @@ def create_client_from_json(json_data: str, tool_model: Any):
 
     except (json.JSONDecodeError, ValidationError, ValueError) as e:
         logger.error(f"Failed to create client: {e}")
+        traceback.print_exc()
         return None

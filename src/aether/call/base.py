@@ -20,13 +20,10 @@ from aether.models.tool.tool_crud import AetherToolCRUD
 class BaseClient(ABC):
     """Abstract base class for all Aether clients."""
 
-    def __init__(
-        self, config: Optional[Type[BaseToolConfig]] = None, auto_dispose: bool = True
-    ):
+    def __init__(self, config: Optional[BaseToolConfig] = None):
         self.config = config
         self.session = get_session()
         self.tool = None
-        self.auto_dispose = auto_dispose
         self.tool_model = getattr(self.config, "tool_model", None)
 
     def create_task(self, req: AetherRequest) -> Optional[AetherTask]:
@@ -53,20 +50,21 @@ class BaseClient(ABC):
         return {"task_id": task_id}
 
     def dispose(self):
-        if self.model is not None and self.auto_dispose:
-            if hasattr(self.model, "close"):
+        if self.tool is not None:
+            if hasattr(self.tool, "close"):
                 try:
-                    self.model.close()
+                    self.tool.close()
                 except Exception:
                     pass
-            if hasattr(self.model, "to"):
+            if hasattr(self.tool, "to"):
                 try:
-                    self.model.cpu()
+                    self.tool.cpu()
                 except Exception:
                     pass
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
-            self.model = None
+            self.tool = None
             gc.collect()
 
-    def call(self, req: AetherRequest, **kwargs) -> AetherResponse[T]: ...
+    def call(self, req: AetherRequest, **kwargs) -> AetherResponse[T]:
+        ...

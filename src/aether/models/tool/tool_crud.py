@@ -20,10 +20,7 @@ class AetherToolCRUD:
     def get_by_id(db: Session, tool_id: int) -> Optional[AetherTool]:
         return (
             db.query(AetherTool)
-            .filter(
-                AetherTool.aether_tool_id == tool_id,
-                AetherTool.is_deleted == 0,
-            )
+            .filter(AetherTool.aether_tool_id == tool_id, AetherTool.is_deleted == 0,)
             .first()
         )
 
@@ -41,10 +38,7 @@ class AetherToolCRUD:
     def update(db: Session, tool_id: int, update_data: dict) -> Optional[AetherTool]:
         model = (
             db.query(AetherTool)
-            .filter(
-                AetherTool.aether_tool_id == tool_id,
-                AetherTool.is_deleted == 0,
-            )
+            .filter(AetherTool.aether_tool_id == tool_id, AetherTool.is_deleted == 0,)
             .first()
         )
         if not model:
@@ -60,10 +54,7 @@ class AetherToolCRUD:
     def delete(db: Session, tool_id: int) -> bool:
         model = (
             db.query(AetherTool)
-            .filter(
-                AetherTool.aether_tool_id == tool_id,
-                AetherTool.is_deleted == 0,
-            )
+            .filter(AetherTool.aether_tool_id == tool_id, AetherTool.is_deleted == 0,)
             .first()
         )
         if not model:

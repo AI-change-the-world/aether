@@ -30,7 +30,7 @@ class FetchResultClient(BaseClient):
             raise e
 
     def __init__(self):
-        super().__init__(auto_dispose=True)
+        super().__init__()
 
     def call(self, req, **kwargs) -> AetherResponse:
         return self.__call(req)
