@@ -23,7 +23,7 @@ def test_chat_openai():
     assert (
         isinstance(res, AetherResponse)
         and res.success
-        and "hello world" in str(res.output["output"])
+        and "hello world" in str(res.output["output"]).lower()
     )
     print(res.output)
     assert ActivatedToolRegistry.instance().get(1) is not None

@@ -1,4 +1,5 @@
 import gc
+import inspect
 from abc import ABC
 from typing import Optional, Type
 
@@ -21,6 +22,17 @@ class BaseClient(ABC):
     """Abstract base class for all Aether clients."""
 
     def __init__(self, config: Optional[BaseToolConfig] = None):
+        # 检查调用栈，避免用户直接实例化
+        stack = inspect.stack()
+        if not any(
+            "create_client_from_json" in frame.function
+            or "create_client_from_json" in frame.filename
+            for frame in stack
+        ):
+            logger.warning(
+                f"⚠️ {self.__class__.__name__} 建议通过 ClientManager 创建，以便正确缓存和管理资源。"
+            )
+
         self.config = config
         self.session = get_session()
         self.tool = None
