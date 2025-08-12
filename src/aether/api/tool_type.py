@@ -36,3 +36,9 @@ class ToolType(str, Enum):
 
     # ONNX 推理模型（可选）
     ONNX_MODEL = "onnx_model"
+
+    REGISTER_MODEL = "register_model"  # 注册模型的特殊类型
+
+    FETCH_RESULT = "fetch_result"  # 获取任务结果的特殊类型
+
+    GET_TOOLS = "get_tools"  # 获取工具列表的特殊类型

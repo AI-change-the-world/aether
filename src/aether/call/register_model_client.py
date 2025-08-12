@@ -3,6 +3,7 @@ import json
 from aether.api.request import AetherRequest, Execution, RegisterModelRequest
 from aether.api.response import with_timing_response
 from aether.call.base import BaseClient
+from aether.call.config import BaseToolConfig
 from aether.call.threaded_call import GLOBAL_THREAD_TASK_MANAGER
 from aether.common.logger import logger
 from aether.models.task.task_crud import AetherTaskCRUD
@@ -18,8 +19,8 @@ class RegisterModelClient(BaseClient):
 
     __task_name__ = "register_model"
 
-    def __init__(self):
-        super().__init__(auto_dispose=True)
+    def __init__(self, config: BaseToolConfig = None):
+        super().__init__(config=config)
 
     @with_timing_response
     def __call(self, req: AetherRequest[RegisterModelRequest], **kwargs) -> dict:
@@ -91,9 +92,7 @@ class RegisterModelClient(BaseClient):
         task_json = aether_task.to_dict()
         if req.meta.execution == Execution.SYNC:
             return self.__call(
-                req,
-                task_id=aether_task.aether_task_id,
-                task_json=task_json,
+                req, task_id=aether_task.aether_task_id, task_json=task_json,
             )
         elif req.meta.execution == Execution.ASYNC:
             GLOBAL_THREAD_TASK_MANAGER.submit(

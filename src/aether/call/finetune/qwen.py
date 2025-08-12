@@ -103,4 +103,5 @@ def qwen_lora_finetune(
     trainer.train()
 
 
-def qwen_lora_eval(model_path: str, system_prompt: Optional[str], prompt: str): ...
+def qwen_lora_eval(model_path: str, system_prompt: Optional[str], prompt: str):
+    ...

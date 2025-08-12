@@ -29,8 +29,8 @@ class FetchResultClient(BaseClient):
             AetherTaskCRUD.update(self.session, task.aether_task_id, task_json)
             raise e
 
-    def __init__(self):
-        super().__init__(auto_dispose=True)
+    def __init__(self, config=None):
+        super().__init__(config=config)
 
     def call(self, req, **kwargs) -> AetherResponse:
         return self.__call(req)

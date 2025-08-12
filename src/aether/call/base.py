@@ -1,6 +1,7 @@
 import gc
+import inspect
 from abc import ABC
-from typing import Optional
+from typing import Optional, Type
 
 import torch
 
@@ -20,13 +21,21 @@ from aether.models.tool.tool_crud import AetherToolCRUD
 class BaseClient(ABC):
     """Abstract base class for all Aether clients."""
 
-    def __init__(
-        self, config: Optional[BaseToolConfig] = None, auto_dispose: bool = True
-    ):
+    def __init__(self, config: Optional[BaseToolConfig] = None):
+        # 检查调用栈，避免用户直接实例化
+        stack = inspect.stack()
+        if not any(
+            "create_client" in frame.function or "create_client" in frame.filename
+            for frame in stack
+        ):
+            logger.warning(
+                f"⚠️ {self.__class__.__name__} 建议通过 ClientManager 创建，以便正确缓存和管理资源。"
+            )
+
         self.config = config
         self.session = get_session()
-        self.model = None
-        self.auto_dispose = auto_dispose
+        self.tool = None
+        self.tool_model = getattr(self.config, "tool_model", None)
 
     def create_task(self, req: AetherRequest) -> Optional[AetherTask]:
         try:
@@ -52,33 +61,21 @@ class BaseClient(ABC):
         return {"task_id": task_id}
 
     def dispose(self):
-        if self.model is not None and self.auto_dispose:
-            if hasattr(self.model, "close"):
+        if self.tool is not None:
+            if hasattr(self.tool, "close"):
                 try:
-                    self.model.close()
+                    self.tool.close()
                 except Exception:
                     pass
-            if hasattr(self.model, "to"):
+            if hasattr(self.tool, "to"):
                 try:
-                    self.model.cpu()
+                    self.tool.cpu()
                 except Exception:
                     pass
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
-            self.model = None
+            self.tool = None
             gc.collect()
 
-    def re_activate(self):
-        pass
-
-    @staticmethod
-    def from_config(config: BaseToolConfig, auto_dispose: bool = False) -> "BaseClient":
-        pass
-
-    def finalize(self, req: AetherRequest):
-        if not self.auto_dispose:
-            self._last_tool_id = req.tool_id
-        else:
-            self.dispose()
-
-    def call(self, req: AetherRequest, **kwargs) -> AetherResponse[T]: ...
+    def call(self, req: AetherRequest, **kwargs) -> AetherResponse[T]:
+        ...

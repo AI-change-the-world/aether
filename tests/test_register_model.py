@@ -7,7 +7,8 @@ from aether.api.request import (
     RequestMeta,
 )
 from aether.api.response import AetherResponse
-from aether.call import FetchResultClient, RegisterModelClient
+from aether.call.client import GLOBAL_CLIENT_MANAGER
+from aether.call.register_model_client import RegisterModelClient
 
 
 def test_register_model():
@@ -22,14 +23,14 @@ def test_register_model():
         request_definition={},
         response_definition={},
     )
-    ar = AetherRequest(task="register_model", extra=r)
+    ar = AetherRequest(task="register_model", extra=r, tool_id=2)
     res = client.call(ar)
     assert isinstance(res, AetherResponse) and res.success
 
 
 def test_register_model_async():
     init_db()
-    client = RegisterModelClient()
+    # client = RegisterModelClient()
     r: RegisterModelRequest = RegisterModelRequest(
         model_name="test_model",
         tool_type="local_openai",
@@ -40,18 +41,21 @@ def test_register_model_async():
         response_definition={},
     )
     ar = AetherRequest(
-        task="register_model", extra=r, meta=RequestMeta(execution=Execution.ASYNC)
+        tool_id=2,
+        task="register_model",
+        extra=r,
+        meta=RequestMeta(execution=Execution.ASYNC),
     )
-    res = client.call(ar)
+    res = GLOBAL_CLIENT_MANAGER.call(ar)
     assert isinstance(res, AetherResponse)
 
     import time
 
     time.sleep(3)
     task_id = str(res.meta.task_id)
-    f_client = FetchResultClient()
-    fr = AetherRequest(task="fetch_result", input=Input(data=task_id))
-    res = f_client.call(fr)
+
+    fr = AetherRequest(task="fetch_result", input=Input(data=task_id), tool_id=1)
+    res = GLOBAL_CLIENT_MANAGER.call(fr)
     assert (
         isinstance(res, AetherResponse)
         and res.success

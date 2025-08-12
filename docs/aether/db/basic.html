@@ -124,7 +124,7 @@
                 <section id="sql_url">
                     <div class="attr variable">
             <span class="name">sql_url</span><span class="annotation">: Optional[str]</span>        =
-<span class="default_value">None</span>
+<span class="default_value">&#39;sqlite:///./aether.db&#39;</span>
 
         
     </div>
@@ -136,7 +136,7 @@
                 <section id="engine">
                     <div class="attr variable">
             <span class="name">engine</span>        =
-<span class="default_value">None</span>
+<span class="default_value">Engine(sqlite:///./aether.db)</span>
 
         
     </div>
@@ -148,7 +148,8 @@
                 <section id="SessionLocal">
                     <div class="attr variable">
             <span class="name">SessionLocal</span>        =
-<span class="default_value">None</span>
+<input id="SessionLocal-view-value" class="view-value-toggle-state" type="checkbox" aria-hidden="true" tabindex="-1">
+            <label class="view-value-button pdoc-button" for="SessionLocal-view-value"></label><span class="default_value">sessionmaker(class_=&#39;Session&#39;, autocommit=False, bind=Engine(sqlite:///./aether.db), autoflush=False, expire_on_commit=True)</span>
 
         
     </div>

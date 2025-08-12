@@ -22,10 +22,7 @@ def validate(input: str | dict, target: str) -> bool:
         return False
 
 
-def is_object_match(
-    data: Union[dict, str],
-    model_cls: type[BaseModel],
-) -> bool:
+def is_object_match(data: Union[dict, str], model_cls: type[BaseModel],) -> bool:
     """
     判断一个 JSON dict 是否能完整满足指定 BaseModel 的字段（支持别名）
 

@@ -46,8 +46,7 @@ def create_nested_dynamic_model(
         # 子模型：Dict 结构 -> 转换成模型
         if isinstance(field_type, dict):
             nested_model = create_nested_dynamic_model(
-                model_name=f"{model_name}_{field_name.capitalize()}",
-                fields=field_type,
+                model_name=f"{model_name}_{field_name.capitalize()}", fields=field_type,
             )
             actual_type = nested_model
 
