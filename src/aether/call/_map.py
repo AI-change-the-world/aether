@@ -7,10 +7,12 @@ from pydantic import ValidationError
 from aether.call.base import BaseClient
 from aether.call.config import *
 from aether.call.fetch_result_client import FetchResultClient
+from aether.call.get_tools_client import GetToolsClient
 from aether.call.openai_client import OpenAIClient
 from aether.call.register_model_client import RegisterModelClient
 from aether.call.yolo.yolo_client import YoloClient
 from aether.common.logger import logger
+from aether.models.tool.tool import AetherTool
 
 TOOL_CONFIG_MAP: Dict[str, Type[BaseToolConfig]] = {
     ToolType.OPENAI_CHAT: OpenAIChatConfig,
@@ -37,16 +39,25 @@ TOOL_CLIENT_MAP: Dict[str, Type[BaseClient]] = {
 }
 
 
-def create_client_from_json(json_data: str | dict, tool_model: Any):
+def create_client(tool_model: AetherTool):
     """
     根据 JSON 字符串动态创建配置和客户端实例。
     """
     try:
-        if isinstance(json_data, str):
-            data = json.loads(json_data)
-        else:
-            data = json_data
-        tool_type = data.get("tool_type")
+        tool_config = json.loads(tool_model.tool_config)
+        tool_type = tool_config.get("tool_type", None)
+
+        if tool_type is None:
+            raise ValueError("tool_type is required")
+
+        if tool_type == ToolType.REGISTER_MODEL:
+            return RegisterModelClient(tool_model=tool_model)
+
+        if tool_type == ToolType.FETCH_RESULT:
+            return FetchResultClient(tool_model=tool_model)
+
+        if tool_type == ToolType.GET_TOOLS:
+            return GetToolsClient(tool_model=tool_model)
 
         if not tool_type:
             raise ValueError("JSON data must contain 'tool_type'.")
@@ -57,7 +68,7 @@ def create_client_from_json(json_data: str | dict, tool_model: Any):
             raise ValueError(f"Unknown tool_type: {tool_type}")
 
         # 使用 Pydantic 构造配置对象，自动验证和转换
-        config_obj = config_class(**data)
+        config_obj = config_class(**tool_config)
 
         # 获取对应的 Client 类
         client_class = TOOL_CLIENT_MAP.get(tool_type)

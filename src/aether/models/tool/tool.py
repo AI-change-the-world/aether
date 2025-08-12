@@ -1,6 +1,7 @@
 import time
+from datetime import datetime
 
-from sqlalchemy import Column, Integer, SmallInteger, String, event
+from sqlalchemy import Column, Integer, SmallInteger, String, event, inspect
 
 from aether.db.basic import Base
 
@@ -24,13 +25,23 @@ class AetherTool(Base):
     is_deleted = Column(SmallInteger, default=0, comment="逻辑删除标记")
     tool_name = Column(String, comment="tool name")
     # json config, such as {"base_url": "http://xxx", "api_key": "sk-1234567890","model_name": "gpt-3.5-turbo"}
-    tool_config = Column(String, comment="tool config")
+    tool_config = Column(String, nullable=True, comment="tool config")
     # tool model request definition, corresponding to api.request.AetherRequest.extra
     # if req == "", then extra is plain text
-    req = Column(String, nullable=False, comment="请求参数定义")
+    req = Column(String, nullable=True, comment="请求参数定义")
     # tool model response definition, corresponding to api.response.AetherResponse.output
     # if resp == "", then output is plain text
-    resp = Column(String, nullable=False, comment="响应参数定义")
+    resp = Column(String, nullable=True, comment="响应参数定义")
+
+    def to_dict(self):
+        """将 ORM 实例转为 JSON 可用的 dict"""
+        result = {}
+        for c in inspect(self).mapper.column_attrs:
+            value = getattr(self, c.key)
+            if isinstance(value, datetime):
+                value = value.isoformat()  # 转成字符串
+            result[c.key] = value
+        return result
 
 
 # 事件钩子：在 SQLite 下手动更新 updated_at

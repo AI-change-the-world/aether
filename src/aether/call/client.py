@@ -1,10 +1,10 @@
-import functools
 import json
 from threading import RLock
-from typing import Callable, Dict, Optional
+from typing import Dict, Optional
 
 from aether.api.request import AetherRequest
-from aether.call._map import create_client_from_json
+from aether.api.response import AetherResponse
+from aether.call._map import create_client
 from aether.call.base import BaseClient
 from aether.common.logger import logger
 from aether.db.basic import get_session
@@ -51,35 +51,6 @@ class ActivatedToolRegistry:
             return dict(self._tools)
 
 
-@DeprecationWarning
-def register_on_success(get_tool_id: Callable):
-    """
-    装饰器：方法执行成功后，将当前 client 注册到全局 ActivatedToolRegistry
-    - get_tool_id: (self, args, kwargs) -> tool_id
-    - 如果 auto_dispose=False，则跳过注册
-    """
-
-    def decorator(func):
-        @functools.wraps(func)
-        def wrapper(self, *args, **kwargs):
-            result = func(self, *args, **kwargs)
-            try:
-                # 跳过不需要注册的客户端
-                if getattr(self, "auto_dispose", True) is True:
-                    return result
-
-                tool_id = get_tool_id(self, args, kwargs)
-                if tool_id:
-                    ActivatedToolRegistry.instance().register(tool_id, self)
-            except Exception as e:
-                logger.warning(f"Registry auto-register failed: {e}")
-            return result
-
-        return wrapper
-
-    return decorator
-
-
 class ClientManager:
     """统一管理客户端的生命周期和缓存"""
 
@@ -87,7 +58,7 @@ class ClientManager:
         self.registry = registry
         self.session = session
 
-    def get_client(self, req: AetherRequest) -> BaseClient:
+    def __get_client(self, req: AetherRequest) -> BaseClient:
         """根据 tool_id 获取或创建并缓存一个客户端实例"""
         client = self.registry.get(req.tool_id)
         if client:
@@ -101,8 +72,7 @@ class ClientManager:
             raise ValueError(f"Tool model with ID {req.tool_id} not found.")
 
         try:
-            tool_config = json.loads(tool_model.tool_config)
-            new_client = create_client_from_json(tool_config, tool_model)
+            new_client = create_client(tool_model)
 
             # 注册到缓存中（如果客户端不需要自动释放）
             # 这段逻辑应在ClientManager中，而不是在客户端内部
@@ -119,6 +89,11 @@ class ClientManager:
         except Exception as e:
             logger.error(f"Failed to create client for tool_id {req.tool_id}: {e}")
             raise e
+
+    def call(self, req: AetherRequest) -> "AetherResponse":
+        """调用客户端的 call 方法"""
+        client = self.__get_client(req)
+        return client.call(req)
 
 
 GLOBAL_CLIENT_MANAGER = ClientManager(ActivatedToolRegistry.instance(), get_session())

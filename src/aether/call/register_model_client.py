@@ -18,8 +18,9 @@ class RegisterModelClient(BaseClient):
 
     __task_name__ = "register_model"
 
-    def __init__(self):
+    def __init__(self, tool_model=None):
         super().__init__()
+        self.tool_model = tool_model
 
     @with_timing_response
     def __call(self, req: AetherRequest[RegisterModelRequest], **kwargs) -> dict:
