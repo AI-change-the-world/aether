@@ -8,7 +8,6 @@ from aether.api.request import (
 )
 from aether.api.response import AetherResponse
 from aether.call.client import GLOBAL_CLIENT_MANAGER
-from aether.call.fetch_result_client import FetchResultClient
 from aether.call.register_model_client import RegisterModelClient
 
 

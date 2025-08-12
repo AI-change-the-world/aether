@@ -1,6 +1,6 @@
 import json
 import traceback
-from typing import Any, Dict, Type
+from typing import Dict, Type
 
 from pydantic import ValidationError
 
@@ -28,6 +28,9 @@ TOOL_CONFIG_MAP: Dict[str, Type[BaseToolConfig]] = {
     ToolType.YOLO_PT: YOLOConfig,
     ToolType.YOLO_ULTRA: YOLOConfig,
     ToolType.ONNX_MODEL: ONNXModelConfig,
+    ToolType.REGISTER_MODEL: BaseToolConfig,
+    ToolType.FETCH_RESULT: BaseToolConfig,
+    ToolType.GET_TOOLS: BaseToolConfig,
 }
 
 
@@ -36,6 +39,9 @@ TOOL_CLIENT_MAP: Dict[str, Type[BaseClient]] = {
     ToolType.LOCAL_OPENAI: OpenAIClient,
     ToolType.YOLO_ULTRA: YoloClient,
     ToolType.YOLO_PT: YoloClient,
+    ToolType.REGISTER_MODEL: RegisterModelClient,
+    ToolType.FETCH_RESULT: FetchResultClient,
+    ToolType.GET_TOOLS: GetToolsClient,
 }
 
 
@@ -49,18 +55,6 @@ def create_client(tool_model: AetherTool):
 
         if tool_type is None:
             raise ValueError("tool_type is required")
-
-        if tool_type == ToolType.REGISTER_MODEL:
-            return RegisterModelClient(tool_model=tool_model)
-
-        if tool_type == ToolType.FETCH_RESULT:
-            return FetchResultClient(tool_model=tool_model)
-
-        if tool_type == ToolType.GET_TOOLS:
-            return GetToolsClient(tool_model=tool_model)
-
-        if not tool_type:
-            raise ValueError("JSON data must contain 'tool_type'.")
 
         # 获取对应的 Config 类
         config_class = TOOL_CONFIG_MAP.get(tool_type)

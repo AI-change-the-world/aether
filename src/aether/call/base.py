@@ -25,8 +25,7 @@ class BaseClient(ABC):
         # 检查调用栈，避免用户直接实例化
         stack = inspect.stack()
         if not any(
-            "create_client_from_json" in frame.function
-            or "create_client_from_json" in frame.filename
+            "create_client" in frame.function or "create_client" in frame.filename
             for frame in stack
         ):
             logger.warning(

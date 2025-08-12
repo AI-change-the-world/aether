@@ -11,9 +11,8 @@ from aether.utils.object_match import validate
 class GetToolsClient(BaseClient):
     __task_name__ = "get_tools"
 
-    def __init__(self, config=None, tool_model=None):
+    def __init__(self, config=None):
         super().__init__(config)
-        self.tool_model = tool_model
 
     @with_timing_response
     def __call(self, req: AetherRequest, **kwargs) -> dict:
