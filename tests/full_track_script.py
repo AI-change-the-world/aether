@@ -2,9 +2,8 @@ import base64
 import logging
 import re
 import threading
-from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
-from typing import Dict, Iterable, List, Set, Tuple
+from typing import Dict, List, Set, Tuple
 
 import cv2
 import numpy as np
@@ -40,7 +39,7 @@ def get_clip_vector(img: np.ndarray) -> np.ndarray:
     # 归一化
     features = features / features.norm(p=2, dim=-1, keepdim=True)
     res = features.cpu().numpy().flatten()
-    print(res.shape)
+    # print(res.shape)
     return res
 
 
@@ -170,6 +169,8 @@ class ClassTrackerObject:
         self.min_image_size = min_image_size  # 最小图像尺寸，避免过小的图像
         self.current_bounding_box = current_bounding_box or bounding_box
 
+        self.cache_images = []
+
     def update_image(self, image: np.ndarray):
         if (
             image.shape[0] < self.min_image_size[0]
@@ -178,8 +179,10 @@ class ClassTrackerObject:
             return
         with self.lock:
             self.image = image
-            if self.image_base64 is not None:  # 确保 image_base64 不为 None
-                self.image_base64 = base64.b64encode(image).decode("utf-8")
+            self.update_embed_vector(get_clip_vector(image))
+            if self.image_base64 is None:  # 确保 image_base64 不为 None
+                self.image_base64 = numpy_to_base64(image)
+            self.cache_images.append(image)
 
     def update_bounding_box(self, bounding_box: Tuple[int, int, int, int]):
         with self.lock:
@@ -193,16 +196,28 @@ class ClassTrackerObject:
         with self.lock:
             self.features = features
 
-    def update_embed_vector(self, embed_vector):
-        with self.lock:
-            self.embed_vector = embed_vector
+    def update_embed_vector(self, new_vec, alpha=0.7):
+        """
+        融合新的向量：指数滑动平均
+        alpha 越大，越依赖历史；越小，越依赖新特征
+        """
+        new_vec = np.asarray(new_vec, dtype=np.float32)
+        new_vec = new_vec / (np.linalg.norm(new_vec) + 1e-6)
+
+        if getattr(self, "embed_vector", None) is None:
+            self.embed_vector = new_vec
+        else:
+            old_vec = self.embed_vector
+            fused = alpha * old_vec + (1 - alpha) * new_vec
+            fused /= np.linalg.norm(fused) + 1e-6
+            self.embed_vector = fused
 
     def __str__(self):
-        return f"id: {self.object_id} initial bbox: {self.bounding_box} current bbox: {self.current_bounding_box} start: {self.start_frame} end: {self.end_frame} image: {self.image.shape if self.image is not None else 'None'}   features: {self.features} "
+        return f"id: {self.object_id} initial bbox: {self.bounding_box} current bbox: {self.current_bounding_box} start: {self.start_frame} end: {self.end_frame} image: {self.image.shape if self.image is not None else 'None'}   features: {self.features} vector: {self.embed_vector.shape if self.embed_vector is not None else 'None'} "
 
 
 GLOBAL_INFO: dict[str, ClassTrackerObject] = {}
-executor = ThreadPoolExecutor(max_workers=4)  # 控制并发线程数
+executor = ThreadPoolExecutor(max_workers=8)  # 控制并发线程数
 
 # === 工具方法 ===
 def crop_and_encode(frame, bbox):
@@ -212,10 +227,13 @@ def crop_and_encode(frame, bbox):
     return numpy_to_base64(crop_img)
 
 
-def crop(frame, bbox):
+def crop(frame, bbox, id: str = "", save_image: bool = False):
     """裁剪bbox"""
     x1, y1, x2, y2 = map(int, bbox)
-    return frame[y1:y2, x1:x2] if x1 < x2 and y1 < y2 else None
+    crop_img = frame[y1:y2, x1:x2] if x1 < x2 and y1 < y2 else None
+    if save_image:
+        cv2.imwrite(f"{id}.jpg", crop_img)
+    return crop_img
 
 
 bndbox_threshold = 0.5  # 重叠阈值
@@ -253,6 +271,8 @@ class ToBeMergedCadidate:
     def __init__(self, object_id: str, target_object_id: str):
         self.object_id = object_id
         self.target_object_id = target_object_id
+        self.similarity = 0.0
+        self.dist = 0.0  # 用于存储 bbox 中心点距离
 
     def __eq__(self, value):
         if not isinstance(value, ToBeMergedCadidate):
@@ -266,202 +286,193 @@ class ToBeMergedCadidate:
         return hash((self.object_id, self.target_object_id))
 
     def __str__(self):
-        return f"{self.object_id} -> {self.target_object_id}"
+        return f"{self.object_id} -> {self.target_object_id}, similarity: {self.similarity:.4f}, dist: {self.dist:.2f}"
 
 
-TO_BE_MERGED: Set[ToBeMergedCadidate] = set()  # 全局缓存：等待 merge 的对象
+candidates_to_merge = set()
 
 
-def _build_graph_from_candidates(
-    candidates: Iterable["ToBeMergedCadidate"],
-) -> Dict[str, Set[str]]:
-    """把候选边集合转成无向图：id -> {neighbors}"""
-    g: Dict[str, Set[str]] = defaultdict(set)
-    for c in candidates:
-        a, b = c.object_id, c.target_object_id
-        if a == b:
+def merge_candidates_by_similarity_and_bbox(
+    global_info: Dict[str, "ClassTrackerObject"],
+    sim_threshold: float = 0.8,
+    # max_bbox_move: float = 50.0,  # bbox中心最大移动像素阈值
+) -> Set["ToBeMergedCadidate"]:
+    """
+    循环遍历 global_info 中的对象，按 start_frame 排序两两比对，
+    如果 bbox 移动小于 max_bbox_move 且 embedding 相似度大于 sim_threshold，
+    就加入 ToBeMergedCadidate 集合。
+    """
+    from itertools import combinations
+
+    global candidates_to_merge
+
+    objs = list(global_info.values())
+    # 按 start_frame 排序
+    objs.sort(key=lambda o: o.start_frame)
+
+    def bbox_center(bbox):
+        x1, y1, x2, y2 = bbox
+        return (0.5 * (x1 + x2), 0.5 * (y1 + y2))
+
+    for obj_a, obj_b in combinations(objs, 2):
+        # 获取 obj_a 的结束帧和 obj_b 的起始帧
+        end_a = obj_a.end_frame if obj_a.end_frame is not None else obj_a.start_frame
+        start_b = (
+            obj_b.start_frame if obj_b.start_frame is not None else obj_b.end_frame
+        )
+
+        # 严格时间顺序：后一个对象第一帧 >= 前一个对象最后一帧
+        if start_b <= end_a:
             continue
-        g[a].add(b)
-        g[b].add(a)
-    return g
+
+        # 计算 bbox 中心移动距离
+        center_a = bbox_center(obj_a.bounding_box)
+        center_b = bbox_center(obj_b.bounding_box)
+        dist = (
+            (center_a[0] - center_b[0]) ** 2 + (center_a[1] - center_b[1]) ** 2
+        ) ** 0.5
+        # if dist > 5 * (start_b - end_a):
+        #     continue
+        if dist > 50:  # 这里可以调整阈值，50 是一个经验值
+            continue
+
+        # 计算 embedding 相似度
+        v_a = getattr(obj_a, "embed_vector", None)
+        v_b = getattr(obj_b, "embed_vector", None)
+        if v_a is None or v_b is None:
+            continue
+        cos_sim = np.dot(v_a, v_b) / (np.linalg.norm(v_a) * np.linalg.norm(v_b) + 1e-6)
+        if cos_sim < sim_threshold:
+            continue
+
+        tbm = ToBeMergedCadidate(obj_b.object_id, obj_a.object_id)
+        tbm.similarity = cos_sim
+        tbm.dist = dist
+        # 同时满足条件，加入候选集合
+        candidates_to_merge.add(tbm)
 
 
-def build_merge_chains(
-    global_info: Dict[str, "ClassTrackerObject"], candidates: Set["ToBeMergedCadidate"]
+def build_time_ordered_chains_with_position_and_similarity(
+    global_info: Dict[str, "ClassTrackerObject"],
+    candidates: Set["ToBeMergedCadidate"],
+    base_dist: float = 5,
+    sim_threshold: float = 0.8,
 ) -> List[List[str]]:
     """
-    根据候选边构建连通分量，每个分量是一组 ID，按 start_frame 升序排序后返回。
+    构建按时间顺序排列的链条，同时根据位置和向量相似度判断是否可以合并。
+    - base_dist: 时间跨度为1帧时允许的最大中心点距离
+    - sim_threshold: 融合向量的最小相似度要求
     """
-    graph = _build_graph_from_candidates(candidates)
-    visited_ids: Set[str] = set()
-    chains: List[List[str]] = []
+    from collections import defaultdict
 
-    def dfs(start_id: str) -> Set[str]:
-        stack = [start_id]
-        comp: Set[str] = set()
-        while stack:
-            nid = stack.pop()
-            if nid in comp:
-                continue
-            comp.add(nid)
-            for nb in graph.get(nid, ()):
-                if nb not in comp:
-                    stack.append(nb)
-        return comp
+    def cosine_similarity(vec1, vec2):
+        if vec1 is None or vec2 is None:
+            return 0.0
+        v1 = np.asarray(vec1, dtype=np.float32).reshape(-1)
+        v2 = np.asarray(vec2, dtype=np.float32).reshape(-1)
+        norm1 = np.linalg.norm(v1)
+        norm2 = np.linalg.norm(v2)
+        if norm1 == 0 or norm2 == 0:
+            return 0.0
+        return float(np.dot(v1, v2) / (norm1 * norm2))
 
-    for node in list(graph.keys()):
-        if node in visited_ids:
-            continue
-        comp = dfs(node)
-        visited_ids |= comp
-        # 只保留 GLOBAL_INFO 中存在的 id
-        comp = {oid for oid in comp if oid in global_info}
-        if not comp:
-            continue
-        sorted_ids = sorted(comp, key=lambda oid: global_info[oid].start_frame)
-        chains.append(sorted_ids)
+    # 构建邻接表
+    graph = defaultdict(list)
+    indegree = defaultdict(int)
+    for pair in candidates:
+        graph[pair.target_object_id].append(pair.object_id)
+        indegree[pair.object_id] += 1
+        indegree.setdefault(pair.target_object_id, 0)
 
+    start_nodes = [oid for oid, deg in indegree.items() if deg == 0]
+    chains = []
+    visited_global = set()
+
+    for start in start_nodes:
+        chain = [start]
+        visited_local = {start}
+        current = start
+
+        while True:
+            children = graph.get(current, [])
+            if not children:
+                break
+
+            # 按 start_frame 排序
+            children.sort(key=lambda x: global_info[x].start_frame)
+
+            added = False
+            for oid in children:
+                if oid in visited_local:
+                    continue
+
+                a = global_info[current]
+                b = global_info[oid]
+
+                # 时间顺序检查
+                end_a = a.end_frame if a.end_frame is not None else a.start_frame
+                start_b = b.start_frame
+                if start_b < end_a:
+                    continue
+
+                # 中心点距离检查
+                x_a = (a.bounding_box[0] + a.bounding_box[2]) / 2
+                y_a = (a.bounding_box[1] + a.bounding_box[3]) / 2
+                x_b = (b.bounding_box[0] + b.bounding_box[2]) / 2
+                y_b = (b.bounding_box[1] + b.bounding_box[3]) / 2
+                dist = ((x_b - x_a) ** 2 + (y_b - y_a) ** 2) ** 0.5
+                dt = start_b - end_a
+                max_dist = base_dist * dt
+                if dist > max_dist:
+                    continue
+
+                # 相似度检查：与链条中所有节点都要超过阈值
+                all_sim_ok = True
+                for prev_oid in chain:
+                    sim = cosine_similarity(
+                        global_info[prev_oid].embed_vector,
+                        global_info[oid].embed_vector,
+                    )
+                    if sim < sim_threshold:
+                        all_sim_ok = False
+                        break
+                if not all_sim_ok:
+                    continue
+
+                # 满足所有条件，加入链条
+                chain.append(oid)
+                visited_local.add(oid)
+                current = oid
+                added = True
+                break  # 每次只加一个
+
+            if not added:
+                break
+
+        chains.append(chain)
+        visited_global.update(chain)
+
+    # 去掉单节点链条
+    chains = [chain for chain in chains if len(chain) > 1]
+    chains = filter_chains_unique_nodes(chains)
     return chains
 
 
-def _merge_two_objects_keep_first(
-    target: "ClassTrackerObject", source: "ClassTrackerObject"
-) -> None:
+def filter_chains_unique_nodes(chains):
     """
-    把 source 合并进 target。策略：
-    - start_frame 取最小
-    - end_frame 取最大（None 视为 start_frame）
-    - bbox 取 end_frame 较晚的那个
-    - features 若 target 无而 source 有，则带过去
-    - embed_vector：若两者都有，做简单平均（归一化后）；否则取现有的那个
+    保证每个节点只在结果链条中出现一次。
+    出现重复的节点，整条链条舍弃。
     """
-    # 起止帧
-    src_start = source.start_frame
-    src_end = source.end_frame if source.end_frame is not None else source.start_frame
-    tgt_start = target.start_frame
-    tgt_end = target.end_frame if target.end_frame is not None else target.start_frame
-
-    target.start_frame = min(tgt_start, src_start)
-    target.update_end_frame(max(tgt_end, src_end))
-
-    # bbox 用“谁的 end 更晚就用谁的”
-    if src_end >= tgt_end:
-        target.update_bounding_box(source.bounding_box)
-
-    # features
-    if getattr(target, "features", None) in (None, "", {}) and getattr(
-        source, "features", None
-    ) not in (None, "", {}):
-        target.update_features(source.features)
-
-    # 向量合并
-    v_t = getattr(target, "embed_vector", None)
-    v_s = getattr(source, "embed_vector", None)
-
-    def _norm(v):
-        if v is None:
-            return None
-        v = np.asarray(v, dtype=np.float32).reshape(-1)
-        n = np.linalg.norm(v)
-        return v / n if n > 0 else None
-
-    nv_t = _norm(v_t)
-    nv_s = _norm(v_s)
-    if nv_t is not None and nv_s is not None:
-        mixed = nv_t + nv_s
-        n = np.linalg.norm(mixed)
-        if n > 0:
-            target.update_embed_vector(mixed / n)
-        else:
-            target.update_embed_vector(nv_t)  # 退化
-    elif nv_t is None and nv_s is not None:
-        target.update_embed_vector(nv_s)
-    # 否则保留 target 的
-
-
-def merge_by_similarity(
-    global_info: Dict[str, "ClassTrackerObject"],
-    chains: List[List[str]],
-    candidates: Set["ToBeMergedCadidate"],
-    sim_threshold: float = 0.8,
-) -> Set[str]:
-    """
-    遍历每条轨迹链，按时间顺序两两比较：
-    - 相似度 >= 阈值：把后者合并进前者（保留前者 ID）
-    - 否则：前者切换为后者，继续往后比较
-    返回：被删除（并入他人）的 ID 集合
-    同时会从 GLOBAL_INFO 里删除这些 ID
-    """
-    removed_ids: Set[str] = set()
+    all_nodes = set()
+    filtered = []
 
     for chain in chains:
-        if not chain:
-            continue
-        merged_kept_id = chain[0]  # 当前保留者
-        for next_id in chain[1:]:
-            # 如果 next_id 在之前链处理中已被删，跳过
-            if next_id in removed_ids or next_id not in global_info:
-                continue
-            if merged_kept_id not in global_info:
-                # 极端情况：之前被别的链删除了，重置
-                merged_kept_id = next_id
-                continue
+        if any(node in all_nodes for node in chain):
+            continue  # 这条链条有重复节点，舍弃
+        filtered.append(chain)
+        all_nodes.update(chain)
 
-            obj_a = global_info[merged_kept_id]
-            obj_b = global_info[next_id]
-
-            if obj_a.embed_vector is None:
-                obj_a.update_embed_vector(get_clip_vector(obj_a.image))
-            if obj_b.embed_vector is None:
-                obj_b.update_embed_vector(get_clip_vector(obj_b.image))
-
-            sim = clip_similarity(
-                np.asarray(obj_a.embed_vector), np.asarray(obj_b.embed_vector)
-            )
-            print(f" Comparing {merged_kept_id} and {next_id}, similarity: {sim}")
-            if sim >= sim_threshold:
-                # 合并：把 next_id 并入 merged_kept_id
-                _merge_two_objects_keep_first(obj_a, obj_b)
-                # 删除 next_id
-                del global_info[next_id]
-                removed_ids.add(next_id)
-                # merged_kept_id 不变，继续尝试与下一个合并
-            else:
-                # 不合并，移动窗口
-                merged_kept_id = next_id
-
-    # 清理 TO_BE_MERGED：删除包含已移除 ID 的候选
-    if candidates:
-        to_drop = set()
-        for c in candidates:
-            if c.object_id in removed_ids or c.target_object_id in removed_ids:
-                to_drop.add(c)
-        candidates.difference_update(to_drop)
-
-    return removed_ids
-
-
-def merge(
-    global_info: Dict[str, "ClassTrackerObject"],
-    candidates: Set["ToBeMergedCadidate"],
-    sim_threshold: float = 0.8,
-) -> Set[str]:
-    """
-    执行一次合并流程：构建链 -> 合并 -> 清理候选
-    返回本轮被合并删除的 ID 集合
-    """
-    chains = build_merge_chains(global_info, candidates)
-    if not chains:
-        print("No chains to merge.")
-        return set()
-    print(f"Found {len(chains)} chains to merge.")
-    for i, chain in enumerate(chains):
-        print(f"Chain {i+1}: {chain}")
-    removed_ids = merge_by_similarity(
-        global_info, chains, candidates, sim_threshold=sim_threshold
-    )
-    print(f"Merge completed, removed IDs: {removed_ids}")
-    return removed_ids
+    return filtered
 
 
 if __name__ == "__main__":
@@ -469,7 +480,7 @@ if __name__ == "__main__":
 
     while True:
         success, frame = video.read()
-        if not success or frame_id > 480:  # 限制处理前 240 帧
+        if not success:
             print("Video processing complete.")
             break
 
@@ -499,19 +510,7 @@ if __name__ == "__main__":
                 )
                 GLOBAL_INFO[tracker_id] = obj
                 # 更新裁剪图像
-                obj.update_image(crop(frame, bbox))
-                # 找到GLOBAL_INFO中位置差不多的object,构建 ToBeMergedCadidate
-                for obj in GLOBAL_INFO.values():
-                    if obj.object_id == tracker_id:
-                        continue
-                    if (
-                        bndbox_overlap(obj.bounding_box, bbox) > bndbox_threshold
-                        or bndbox_overlap(obj.current_bounding_box, bbox)
-                    ) and (
-                        abs(obj.end_frame - obj.start_frame) <= 5
-                        or abs(obj.start_frame - obj.end_frame) <= 5
-                    ):
-                        TO_BE_MERGED.add(ToBeMergedCadidate(tracker_id, obj.object_id))
+                obj.update_image(crop(frame, bbox, id=tracker_id, save_image=False))
 
                 # 异步更新 feature
                 # if not obj.is_updating:
@@ -521,13 +520,17 @@ if __name__ == "__main__":
                 # 已存在对象，更新最后一次 bbox
                 GLOBAL_INFO[tracker_id].update_bounding_box(bbox)
                 GLOBAL_INFO[tracker_id].update_end_frame(frame_id)
-                GLOBAL_INFO[tracker_id].update_image(crop(frame, bbox))
+                if frame_id % frame_rate == 0:
+                    # 每隔 frame_rate 帧更新一次图像
+                    executor.submit(
+                        GLOBAL_INFO[tracker_id].update_image, crop(frame, bbox)
+                    )
 
         if frame_id % frame_rate == 0:
             # 每隔 frame_rate 帧检查一次
-            executor.submit(merge, GLOBAL_INFO, TO_BE_MERGED, sim_threshold=0.8)
+            executor.submit(merge_candidates_by_similarity_and_bbox, GLOBAL_INFO)
 
-    executor.submit(merge, GLOBAL_INFO, TO_BE_MERGED, sim_threshold=0.8)
+    executor.submit(merge_candidates_by_similarity_and_bbox, GLOBAL_INFO)
     executor.shutdown(wait=True)
 
     print("Tracking complete.")
@@ -552,3 +555,13 @@ if __name__ == "__main__":
     )
     print("Total frames:", frame_id)
     print("Total objects:", len(valid_items))
+
+    print("Candidates to merge:")
+    for candidate in candidates_to_merge:
+        print(candidate)
+    chains = build_time_ordered_chains_with_position_and_similarity(
+        GLOBAL_INFO, candidates_to_merge
+    )
+    print("Chains of merged objects:")
+    for chain in chains:
+        print(chain)
