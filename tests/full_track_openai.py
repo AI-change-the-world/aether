@@ -1,6 +1,7 @@
 import base64
-import traceback
+import pickle
 import random
+import traceback
 
 import cv2
 import numpy as np
@@ -206,3 +207,7 @@ for obj in valid_items:
     print(f"Object ID: {obj.object_id} :")
     print(obj.features)
     print("-----")
+
+
+with open("full_track_openai.pkl", "wb") as f:
+    pickle.dump(valid_items, f, protocol=pickle.HIGHEST_PROTOCOL)
