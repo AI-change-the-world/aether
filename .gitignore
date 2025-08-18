@@ -194,3 +194,5 @@ logs/
 
 *.db
 grounding-dino-base/
+
+*.pkl
