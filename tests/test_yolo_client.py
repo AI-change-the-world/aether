@@ -9,7 +9,11 @@ def test_yolo_detection():
     init_db()
 
     get_tools_req = AetherRequest(
-        task="chat", tool_id=3, extra={"like": "yolo_detection",},
+        task="chat",
+        tool_id=3,
+        extra={
+            "like": "yolo_detection",
+        },
     )
     tools = GLOBAL_CLIENT_MANAGER.call(get_tools_req)
     assert tools.output is not None and len(tools.output) > 0, "获取工具列表失败"

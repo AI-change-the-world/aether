@@ -99,7 +99,10 @@ def numpy_to_base64(frame: np.ndarray) -> str:
     return f"data:image/png;base64,{base64.b64encode(buffer).decode('utf-8')}"
 
 
-vl_client = OpenAI(api_key="sk-x", base_url="http://localhost:9997/v1",)
+vl_client = OpenAI(
+    api_key="sk-x",
+    base_url="http://localhost:9997/v1",
+)
 
 while True:
     success, frame = video.read()

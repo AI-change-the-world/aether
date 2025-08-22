@@ -10,130 +10,57 @@ import numpy as np
 import supervision as sv
 import torch
 from openai import OpenAI
-from PIL import Image
-from transformers import CLIPModel, CLIPProcessor
 from ultralytics import YOLO
 from ultralytics.utils import LOGGER
 
 LOGGER.setLevel(logging.WARNING)  # 只输出 warning 以上的日志
 
-# CLIP section
-# 初始化模型和处理器（全局使用，避免重复加载）
-device = "cuda" if torch.cuda.is_available() else "cpu"
-clip_model = CLIPModel.from_pretrained("/root/models/clip").to(device)
-processor = CLIPProcessor.from_pretrained("/root/models/clip")
+
+import onnxruntime as ort
+import cv2
+import numpy as np
 
 
-def get_clip_vector(img: np.ndarray) -> np.ndarray:
-    """
-    获取图像的 CLIP 向量
-    参数:
-        img: np.ndarray，形状 H x W x C，像素值范围 0-255
-    返回:
-        np.ndarray，归一化后的 CLIP 向量
-    """
-    pil_img = Image.fromarray(img.astype(np.uint8))
-    inputs = processor(images=pil_img, return_tensors="pt").to(device)
-    with torch.no_grad():
-        features = clip_model.get_image_features(**inputs)
-    # 归一化
-    features = features / features.norm(p=2, dim=-1, keepdim=True)
-    res = features.cpu().numpy().flatten()
-    # print(res.shape)
-    return res
+class ReIDModel:
+    def __init__(self, onnx_model_path: str):
+        self.session = ort.InferenceSession(onnx_model_path)
+        self.input_name = self.session.get_inputs()[0].name
+        self.output_name = self.session.get_outputs()[0].name
+
+    def extract_feature(self, img: np.ndarray) -> np.ndarray:
+        """
+        输入: img (np.ndarray), shape=[H,W,3] (BGR 或 RGB 都可以)
+        输出: feature 向量 (1, D)
+        """
+        if img is None:
+            raise ValueError("输入图像为空")
+
+        # 确保是 RGB
+        if img.shape[2] == 3:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+        # resize (W=128, H=256)
+        img_resized = cv2.resize(img, (128, 256))
+
+        # float32 归一化
+        img_resized = img_resized.astype(np.float32) / 255.0
+
+        # [H,W,C] → [C,H,W]
+        img_resized = np.transpose(img_resized, (2, 0, 1))
+
+        # [1,C,H,W]
+        img_resized = np.expand_dims(img_resized, axis=0)
+
+        # 推理
+        features = self.session.run([self.output_name], {self.input_name: img_resized})[
+            0
+        ]
+
+        # 有些 ReID 模型会输出 (1, D)，直接返回即可
+        return features.squeeze()
 
 
-def clip_similarity(vec1: np.ndarray, vec2: np.ndarray) -> float:
-    """
-    计算两个 CLIP 向量的余弦相似度
-    参数:
-        vec1, vec2: np.ndarray，归一化后的 CLIP 向量
-    返回:
-        float，相似度 [-1, 1]，越接近 1 越相似
-    """
-    vec1 = torch.tensor(vec1)
-    vec2 = torch.tensor(vec2)
-    similarity = torch.nn.functional.cosine_similarity(
-        vec1.unsqueeze(0), vec2.unsqueeze(0)
-    )
-    return similarity.item()
-
-
-# MLLM section
-
-prompt = """
-你是一个专业的视频图像分析专家，请仔细观察输入的图像或视频帧中的人物，并严格按照以下格式输出人物特征（不允许输出多余信息，不允许省略字段）：
-
-性别：男 / 女 / 未知
-发型：长发 / 短发 / 光头 / 其他  
-发色：黑色 / 棕色 / 黄色 / 白色 / 灰色 / 其他  
-上身：颜色 + 类型（如 红色短袖、黑色夹克、白色衬衫、蓝色毛衣 等）  
-下身：颜色 + 类型（如 蓝色牛仔裤、黑色长裤、灰色短裙、白色运动裤 等）  
-鞋子：颜色 + 类型（如 白色运动鞋、黑色皮鞋、灰色凉鞋 等）  
-配饰：如帽子（颜色+类型）、眼镜、耳机、口罩、包等（如果没有则写“无”）  
-特殊动作或状态：如抽烟、打电话、背包、推车、跑步等（如果没有则写“无”）  
-
-注意：
-1. 只分析人物外观，不推测身份。  
-2. 如果无法判断，请写“未知”。  
-3. 保证输出严格按照上述字段顺序和格式。
-"""
-
-
-def numpy_to_base64(frame: np.ndarray) -> str:
-    """
-    将 NumPy 数组转换为 base64 编码的字符串。
-    """
-    _, buffer = cv2.imencode(".png", frame)
-    return f"data:image/png;base64,{base64.b64encode(buffer).decode('utf-8')}"
-
-
-vl_client = OpenAI(
-    api_key="sk-x",
-    base_url="http://localhost:9997/",
-)
-
-
-def parse_person_features(
-    llm_output: str, start_step: int, end_step: int, person_id: int
-):
-    """
-    将 LLM 输出的特征文本解析为 JSON 结构。
-    输入:
-        llm_output: str  —— LLM 按 prompt 格式输出的人物特征
-        start_step: int  —— 起始帧
-        end_step: int    —— 结束帧
-        person_id: int   —— 人物 ID
-    返回:
-        dict —— {"start_step": int, "end_step": int, "person_id": int, "features": {...}}
-    """
-    # 用正则匹配每个字段
-    patterns = {
-        "性别": r"性别：(.+)",
-        "发型": r"发型：(.+)",
-        "发色": r"发色：(.+)",
-        "上身": r"上身：(.+)",
-        "下身": r"下身：(.+)",
-        "鞋子": r"鞋子：(.+)",
-        "配饰": r"配饰：(.+)",
-        "特殊动作或状态": r"特殊动作或状态：(.+)",
-    }
-
-    features = {}
-    for key, pattern in patterns.items():
-        match = re.search(pattern, llm_output)
-        if match:
-            features[key] = match.group(1).strip()
-        else:
-            features[key] = "未知"  # 如果没匹配到，就写未知
-
-    return {
-        "start_step": start_step,
-        "end_step": end_step,
-        "person_id": person_id,
-        "features": features,
-    }
-
+reid_model = ReIDModel("resnet50_market1501_aicity156.onnx")
 
 # YOLO section
 
@@ -182,7 +109,7 @@ class ClassTrackerObject:
             return
         with self.lock:
             self.image = image
-            self.update_embed_vector(get_clip_vector(image))
+            self.update_embed_vector(reid_model.extract_feature(image))
             if self.image_base64 is None:  # 确保 image_base64 不为 None
                 self.image_base64 = numpy_to_base64(image)
             self.cache_images.append(image)
@@ -236,7 +163,7 @@ def crop(frame, bbox, id: str = "", save_image: bool = False):
     x1, y1, x2, y2 = map(int, bbox)
     crop_img = frame[y1:y2, x1:x2] if x1 < x2 and y1 < y2 else None
     if save_image:
-        cv2.imwrite(f"{id}.jpg", crop_img)
+        cv2.imwrite(f"logs/{id}.jpg", crop_img)
     return crop_img
 
 
@@ -298,7 +225,7 @@ candidates_to_merge = set()
 
 def merge_candidates_by_similarity_and_bbox(
     global_info: Dict[str, "ClassTrackerObject"],
-    sim_threshold: float = 0.8,
+    sim_threshold: float = 0.85,
     # max_bbox_move: float = 50.0,  # bbox中心最大移动像素阈值
 ) -> Set["ToBeMergedCadidate"]:
     """
@@ -514,7 +441,7 @@ if __name__ == "__main__":
                 )
                 GLOBAL_INFO[tracker_id] = obj
                 # 更新裁剪图像
-                obj.update_image(crop(frame, bbox, id=tracker_id, save_image=False))
+                obj.update_image(crop(frame, bbox, id=tracker_id, save_image=True))
 
                 # 异步更新 feature
                 # if not obj.is_updating:

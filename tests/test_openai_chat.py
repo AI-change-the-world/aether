@@ -8,7 +8,13 @@ from aether.call.client import ActivatedToolRegistry
 
 def test_chat_openai():
     init_db()
-    get_tools_req = AetherRequest(task="chat", tool_id=3, extra={"like": "chat",},)
+    get_tools_req = AetherRequest(
+        task="chat",
+        tool_id=3,
+        extra={
+            "like": "chat",
+        },
+    )
     tools = GLOBAL_CLIENT_MANAGER.call(get_tools_req)
     assert tools.output is not None and len(tools.output) > 0, "获取工具列表失败"
 
