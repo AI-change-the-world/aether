@@ -66,11 +66,23 @@ reid_model = ReIDModel("resnet50_market1501_aicity156.onnx")
 
 
 model = YOLO("yolo11n.pt", verbose=False)
-tracker = sv.ByteTrack()
+tracker = sv.ByteTrack(
+    track_activation_threshold=0.5,
+    lost_track_buffer=48,
+    frame_rate=24,
+)
 box_annotator = sv.BoxAnnotator()
 label_annotator = sv.LabelAnnotator()
 
 video = cv2.VideoCapture("test.mp4")
+
+
+def numpy_to_base64(frame: np.ndarray) -> str:
+    """
+    将 NumPy 数组转换为 base64 编码的字符串。
+    """
+    _, buffer = cv2.imencode(".png", frame)
+    return f"data:image/png;base64,{base64.b64encode(buffer).decode('utf-8')}"
 
 
 class ClassTrackerObject:
