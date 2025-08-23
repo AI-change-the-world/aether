@@ -8,7 +8,7 @@ model = YOLO("yolo11m-pose.pt")  # load an official model
 # Predict with the model
 results = model(r"D:\github_repo\aether\tests\logs\15.jpg")  # predict on an image
 
-print(len(results) )
+print(len(results))
 
 # # Access the results
 # for result in results:
@@ -31,12 +31,12 @@ def detect_and_crop(image: np.ndarray, min_keypoints=5, conf_thresh=0.5, padding
     results = model(image)
 
     print(f"boxes: {len(results)}")
-    
+
     if len(results) == 0 or len(results[0].keypoints) == 0:
         return None
 
-    boxes = results[0].boxes.xyxy.cpu().numpy()   # [x1, y1, x2, y2]
-    scores = results[0].boxes.conf.cpu().numpy() # 置信度
+    boxes = results[0].boxes.xyxy.cpu().numpy()  # [x1, y1, x2, y2]
+    scores = results[0].boxes.conf.cpu().numpy()  # 置信度
     kps = results[0].keypoints.data.cpu().numpy()  # 关键点 [n, 17, 3]
 
     print(f"kps: {kps}")
@@ -44,18 +44,18 @@ def detect_and_crop(image: np.ndarray, min_keypoints=5, conf_thresh=0.5, padding
     annotated_img = image.copy()
 
     for kp in kps:
-        for x,y,_ in kp:
+        for x, y, _ in kp:
             if x > 0 and y > 0:  # 关键点存在
                 cv2.circle(annotated_img, (int(x), int(y)), 3, (0, 255, 0), -1)
 
-    cv2.imwrite(f'xxx.jpg', annotated_img)
+    cv2.imwrite(f"xxx.jpg", annotated_img)
 
     # 只保留置信度高的
     valid_indices = [i for i, s in enumerate(scores) if s >= conf_thresh]
     print(f"{len(valid_indices)} valid boxes")
     if len(valid_indices) != 1:
         return None  # 过滤：没检测到人 或 多个人
-    
+
     idx = valid_indices[0]
     x1, y1, x2, y2 = boxes[idx]
     keypoints = kps[idx]
