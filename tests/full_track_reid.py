@@ -27,6 +27,26 @@ class ReIDModel:
         self.input_name = self.session.get_inputs()[0].name
         self.output_name = self.session.get_outputs()[0].name
 
+    def preprocess_for_reid(self, img: np.ndarray, target_size=(128, 256)) -> np.ndarray:
+        """
+        对图像进行padding和resize，保持原始高宽比
+        """
+        target_w, target_h = target_size
+        h, w, _ = img.shape
+        
+        # 计算缩放比例和padding尺寸
+        scale = min(target_w / w, target_h / h)
+        new_w, new_h = int(w * scale), int(h * scale)
+        img_resized = cv2.resize(img, (new_w, new_h))
+        
+        # 创建一个目标尺寸的画布，并将resize后的图像粘贴到中心
+        pad_img = np.full((target_h, target_w, 3), 128, dtype=np.uint8) # 用灰色填充
+        pad_top = (target_h - new_h) // 2
+        pad_left = (target_w - new_w) // 2
+        pad_img[pad_top:pad_top+new_h, pad_left:pad_left+new_w] = img_resized
+        
+        return pad_img
+
     def extract_feature(self, img: np.ndarray) -> np.ndarray:
         """
         输入: img (np.ndarray), shape=[H,W,3] (BGR 或 RGB 都可以)
@@ -40,7 +60,7 @@ class ReIDModel:
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         # resize (W=128, H=256)
-        img_resized = cv2.resize(img, (128, 256))
+        img_resized = self.preprocess_for_reid(img, (128, 256))
 
         # float32 归一化
         img_resized = img_resized.astype(np.float32) / 255.0
